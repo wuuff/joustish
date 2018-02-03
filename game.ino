@@ -5,11 +5,17 @@ struct entity entities[NUM_ENTITIES];
 void stepPlayer(uint8_t index){
   uint8_t state = arduboy.buttonsState();
 
+  entities[index].skid = 0;
+
   //Apply left or right velocity
   if( LEFT_BUTTON & state ){
+    //If direction differs, then we are skidding
+    if( entities[index].xvel > 0 ) entities[index].skid = 1;
     entities[index].xvel -= 2;
   }
   else if( RIGHT_BUTTON & state ){
+    //If direction differs, then we are skidding
+    if( entities[index].xvel < 0 ) entities[index].skid = 1;
     entities[index].xvel += 2;
   }
 

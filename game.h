@@ -8,6 +8,8 @@ struct entity{
   int16_t y;
   int16_t xvel;
   int16_t yvel;
+  uint8_t anim;
+  uint8_t skid;
 };
 
 #define GRAVITY 4
