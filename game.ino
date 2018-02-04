@@ -19,10 +19,15 @@ void stepPlayer(uint8_t index){
     entities[index].xvel += 2;
   }
 
-  //Jump or apply gravity
-  if( A_BUTTON & state ){
-    entities[index].yvel -= 7;
+  //Flap if button is pressed (but not held) or apply gravity
+  if( (A_BUTTON & state) && entities[index].status == STATUS_NORMAL ){
+    entities[index].status = STATUS_FLAP;
+    entities[index].yvel -= 16;
   }else{
+    //If player was flapping (and button is no longer pressed), set back to not flapping
+    if( !(A_BUTTON & state) && entities[index].status == STATUS_FLAP ){
+      entities[index].status = STATUS_NORMAL;
+    }
     entities[index].yvel += GRAVITY;
   }
 
@@ -42,7 +47,7 @@ void stepPlayer(uint8_t index){
       arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+2, (uint16_t)entities[index].y/8+6) == WHITE ||
       arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+6, (uint16_t)entities[index].y/8+6) == WHITE ) ){
   //arduboy.print("XX");
-    entities[index].xvel /= 2;
+    entities[index].xvel /= -2;
   }
   arduboy.print( arduboy.getPixel((uint16_t)entities[index].x/8, (uint16_t)(entities[index].y + entities[index].yvel)/8) );
   //Test world collision (y)
@@ -78,6 +83,11 @@ void stepPlayer(uint8_t index){
     entities[index].y = (SCREEN_HEIGHT-8)*8-4;
     entities[index].yvel = 0;
   }*/
+
+   //If get stuck above screen, force into screen
+   if( (entities[index].y) < 0 ){
+     entities[index].y = 0;
+   }
 
   //Wrap left and right
   if( entities[index].x > (SCREEN_WIDTH-7)*8 ){

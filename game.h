@@ -26,6 +26,7 @@ struct entity{
 #define STATUS_NORMAL 0
 #define STATUS_UNDYING 1
 #define STATUS_DEAD 2
+#define STATUS_FLAP 3
 
 #define NUM_ENTITIES 8
 
