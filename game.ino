@@ -2,7 +2,49 @@
 
 struct entity entities[NUM_ENTITIES];
 
+/*
+ * Test entity/entity collision
+ */
+void testCollision(uint8_t index){
+  uint8_t i;
+  for( i = 0; i < NUM_ENTITIES; i++ ){
+    //Do not check for collision with self or null entities
+    if( i != index && entities[i].type != TYPE_NULL ){
+      //If they are colliding on the x axis (bounding box of 6, not 8)
+      if( entities[i].x-3*8 < entities[index].x && entities[i].x+3*8 > entities[index].x ){
+        //If they are colliding on the y axis (bounding box of 7, not 8)
+        if( entities[i].y-3*8 < entities[index].y && entities[i].y+4*8 > entities[index].y ){
+          //If travelling towards other entity (if travelling away, do nothing)
+          if( (entities[index].xvel > 0 && entities[i].x > entities[index].x) ||
+              (entities[index].xvel < 0 && entities[i].x < entities[index].x) ){
+            entities[index].xvel *= -2;//Bounce
+          }
+          //If the colliding entities are the player and an enemy
+          if( (entities[index].type == TYPE_PLAYER && entities[i].type == TYPE_ENEMY) ){
+            //If player is higher, enemy dies
+            if( entities[index].y/8 < entities[i].y/8 ){
+              entities[i].status = STATUS_DEAD;
+            }//If enemy is higher, player dies
+            else if( entities[index].y/8 > entities[i].y/8 ){
+              entities[index].status = STATUS_DEAD;
+            }
+            //If they are even, they just bounce
+          }
+          if(index == 0) arduboy.print(F("HIT"));
+        }
+      }
+    }
+  }
+}
+
+/*
+ * Step movement for entities, checking world and entity collision.
+ * This does not include the inputs by the entity (AI or player input).
+ */
 void stepEntity(uint8_t index){
+  //Test for collision with other entities
+  testCollision(index);
+  
   //Cap off velocity so we can't go through things
   if( entities[index].yvel > VEL_MAX ) entities[index].yvel = VEL_MAX;
   else if( entities[index].yvel < -VEL_MAX ) entities[index].yvel = -VEL_MAX;
@@ -83,6 +125,11 @@ void stepEntity(uint8_t index){
   */
 }
 
+/*
+ * Check player inputs and determine how they will attempt
+ * to influence the player's velocity.  This may be overridden
+ * by stepEntity if the player cannot move to where they are attempting.
+ */
 void stepPlayer(uint8_t index){
   uint8_t state = arduboy.buttonsState();
 
@@ -114,6 +161,11 @@ void stepPlayer(uint8_t index){
 
 }
 
+/*
+ * Check enemy AI and determine how it will attempt
+ * to influence the enemy's velocity.  This may be overridden
+ * by stepEntity if the AI cannot move to where it is attempting.
+ */
 void stepEnemy(uint8_t index){
   entities[index].skid = 0;//Assume not skidding
   //Random flaps
