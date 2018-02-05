@@ -115,6 +115,7 @@ void stepPlayer(uint8_t index){
 }
 
 void stepEnemy(uint8_t index){
+  entities[index].skid = 0;//Assume not skidding
   //Random flaps
   if( rand()%6 == 0 ){
     entities[index].yvel -= 16;
@@ -129,6 +130,8 @@ void stepEnemy(uint8_t index){
   }
   //Run left or right depending on choice
   if( entities[index].status == STATUS_NORMAL ){
+    //If direction differs, then we are skidding
+    if( entities[index].xvel > 0 ) entities[index].skid = 1;
     //Flap if stuck
     if( entities[index].xvel > -2 ){
       entities[index].yvel -= 6;
@@ -138,6 +141,8 @@ void stepEnemy(uint8_t index){
       entities[index].xvel -= 2;
     }
   }else if( entities[index].status == STATUS_RIGHT ){
+    //If direction differs, then we are skidding
+    if( entities[index].xvel < 0 ) entities[index].skid = 1;
     //Flap if stuck
     if( entities[index].xvel < 2 ){
       entities[index].yvel -= 6;
