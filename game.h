@@ -13,7 +13,8 @@ struct entity{
 };
 
 #define GRAVITY 4
-#define VEL_MAX 32
+#define VEL_MAX 31
+#define ENEMY_VEL_MAX 16
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -27,6 +28,7 @@ struct entity{
 #define STATUS_UNDYING 1
 #define STATUS_DEAD 2
 #define STATUS_FLAP 3
+#define STATUS_RIGHT 4
 
 #define NUM_ENTITIES 8
 

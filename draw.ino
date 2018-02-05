@@ -62,7 +62,7 @@ void drawGame(){
         arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
         break;
       case TYPE_ENEMY:
-        
+        arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, playerSprites, 8, 8, WHITE);
         break;
       case TYPE_EGG:
         
