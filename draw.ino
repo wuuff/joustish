@@ -64,13 +64,29 @@ const unsigned char enemySprites[] PROGMEM = {
 };
 
 /*
+ * Step the animation of the entity forward.
+ * The state of the entity influences how the animation advances.
+ */
+void tickAnim(uint8_t i){
+  //Normal statuses (TODO: perhaps organize normal statuses better)
+  if( entities[i].status == STATUS_NORMAL || entities[i].status == STATUS_FLAP || entities[i].status == STATUS_RIGHT ){
+    //Run animation is timed with walking speed
+    entities[i].anim += abs(entities[i].xvel)*4;
+  }//If entity is spawning
+  else if( entities[i].status == STATUS_UNDYING ){
+    entities[i].anim++;//Tick forward by only 1
+  }
+}
+
+/*
  * Get the offset of the correct sprite for the character
  * depending on their speed, direction, etc.
  */
 uint8_t getSpriteOffset(uint8_t i){
   uint8_t sprOff = 0;//Use sprite offset to indicate which sprite to draw
-  //Run animation is timed with walking speed
-  entities[i].anim += abs(entities[i].xvel)*4;
+
+  tickAnim(i);
+  
   //Skid if attempting to go opposite direction of current velocity
   if( entities[i].skid ){
     sprOff = ANIM_SKID;
@@ -107,11 +123,21 @@ void drawGame(){
     switch( entities[i].type ){
       case TYPE_PLAYER:
         sprOff = getSpriteOffset(i);
-        arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
+        //If spawning, make it rise out of the spawn area
+        if( entities[i].status == STATUS_UNDYING ){
+          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
+        }else{
+          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
+        }
         break;
       case TYPE_ENEMY:
         sprOff = getSpriteOffset(i);
-        arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
+        //If spawning, make it rise out of the spawn area
+        if( entities[i].status == STATUS_UNDYING ){
+          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), enemySprites+sprOff, 8, entities[i].anim/4, WHITE);
+        }else{
+          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
+        }
         break;
       case TYPE_EGG:
         

@@ -3,6 +3,29 @@
 struct entity entities[NUM_ENTITIES];
 
 /*
+ * This contains the locations of the spawn locations in the map
+ */
+struct coord spawn_points[NUM_SPAWNS] = {
+  {47,5},
+  {6,23},
+  {98,18},
+  {51,49},
+};
+
+/*
+ * Spawn a player or enemy by choosing a spawn location
+ */
+void spawnBird(uint8_t index){
+  uint8_t loc = rand()%NUM_SPAWNS;// Choose spawn location randomly
+  entities[index].x = spawn_points[loc].x*8;
+  entities[index].y = spawn_points[loc].y*8;
+  entities[index].xvel = 0;
+  entities[index].yvel = 0;
+  entities[index].status = STATUS_UNDYING;// Invulnerable when it first spawns
+  entities[index].anim = 0;// Reset animation, as we use this to animate the spawning
+}
+
+/*
  * Test entity/entity collision
  */
 void testCollision(uint8_t index){
@@ -10,22 +33,37 @@ void testCollision(uint8_t index){
   for( i = 0; i < NUM_ENTITIES; i++ ){
     //Do not check for collision with self or null entities
     if( i != index && entities[i].type != TYPE_NULL ){
-      //If they are colliding on the x axis (bounding box of 6, not 8)
-      if( entities[i].x-3*8 < entities[index].x && entities[i].x+3*8 > entities[index].x ){
-        //If they are colliding on the y axis (bounding box of 7, not 8)
-        if( entities[i].y-3*8 < entities[index].y && entities[i].y+4*8 > entities[index].y ){
+      //If they are colliding on the x axis (bounding box of 6, not 8) NOW 8
+      if( entities[i].x-5*8 < entities[index].x && entities[i].x+5*8 > entities[index].x ){
+        //If they are colliding on the y axis (bounding box of 7, not 8) NOW 8
+        if( entities[i].y-5*8 < entities[index].y && entities[i].y+5*8 > entities[index].y ){
           //If travelling towards other entity (if travelling away, do nothing)
           if( (entities[index].xvel > 0 && entities[i].x > entities[index].x) ||
               (entities[index].xvel < 0 && entities[i].x < entities[index].x) ){
-            entities[index].xvel *= -2;//Bounce
+            entities[index].xvel /= -2;//Bounce
           }
           //If the colliding entities are the player and an enemy
           if( (entities[index].type == TYPE_PLAYER && entities[i].type == TYPE_ENEMY) ){
             //If player is higher, enemy dies
             if( entities[index].y/8 < entities[i].y/8 ){
+              arduboy.print(F("ENEM"));
               entities[i].status = STATUS_DEAD;
             }//If enemy is higher, player dies
             else if( entities[index].y/8 > entities[i].y/8 ){
+              arduboy.print(F("PLAY"));
+              entities[index].status = STATUS_DEAD;
+            }
+            //If they are even, they just bounce
+          }
+          //If the colliding entities are the enemy and the player
+          else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_ENEMY) ){
+            //If enemy is higher, player dies
+            if( entities[index].y/8 < entities[i].y/8 ){
+              arduboy.print(F("PLAY"));
+              entities[i].status = STATUS_DEAD;
+            }//If player is higher, enemy dies
+            else if( entities[index].y/8 > entities[i].y/8 ){
+              arduboy.print(F("ENEM"));
               entities[index].status = STATUS_DEAD;
             }
             //If they are even, they just bounce
@@ -42,8 +80,22 @@ void testCollision(uint8_t index){
  * This does not include the inputs by the entity (AI or player input).
  */
 void stepEntity(uint8_t index){
-  //Test for collision with other entities
-  testCollision(index);
+  //Check if currently spawning.  If so, do not interact with other entities.
+  if( entities[index].status == STATUS_UNDYING ){
+    //If spawn animation is done, remove invulnerability
+    if( entities[index].anim == 32 ){
+      entities[index].status = STATUS_NORMAL; //Finish spawning
+    }
+    return;//No collision tests while spawning
+  }
+
+  //Check if entity is dead.  If so, ignore collision with other entities
+  if( entities[index].status == STATUS_DEAD ){
+    spawnBird(index);//Temporarily spawn immediately here (TODO: change to spawn after bird goes off screen!)
+  }else{
+    //Test for collision with other entities
+    testCollision(index);
+  }
   
   //Cap off velocity so we can't go through things
   if( entities[index].yvel > VEL_MAX ) entities[index].yvel = VEL_MAX;
@@ -136,6 +188,10 @@ void stepEntity(uint8_t index){
  * by stepEntity if the player cannot move to where they are attempting.
  */
 void stepPlayer(uint8_t index){
+  if( entities[index].status == STATUS_UNDYING ){
+    return;//No moving while spawning
+  }
+  
   uint8_t state = arduboy.buttonsState();
 
   entities[index].skid = 0;
@@ -172,6 +228,10 @@ void stepPlayer(uint8_t index){
  * by stepEntity if the AI cannot move to where it is attempting.
  */
 void stepEnemy(uint8_t index){
+  if( entities[index].status == STATUS_UNDYING ){
+    return;//No moving while spawning
+  }
+  
   entities[index].skid = 0;//Assume not skidding
   //Random flaps
   if( rand()%6 == 0 ){

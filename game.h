@@ -12,9 +12,14 @@ struct entity{
   uint8_t skid;
 };
 
+struct coord{
+  uint16_t x;
+  uint16_t y;
+};
+
 #define GRAVITY 4
 #define VEL_MAX 31
-#define ENEMY_VEL_MAX 16
+#define ENEMY_VEL_MAX 8//#define ENEMY_VEL_MAX 16
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -31,6 +36,7 @@ struct entity{
 #define STATUS_RIGHT 4
 
 #define NUM_ENTITIES 8
+#define NUM_SPAWNS 4
 
 extern struct entity entities[NUM_ENTITIES];
 
