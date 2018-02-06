@@ -75,7 +75,12 @@ void stepEntity(uint8_t index){
       (entities[index].y + entities[index].yvel)/8 > (SCREEN_HEIGHT-10) ||
       (entities[index].y + entities[index].yvel) < 0 ) ){
         //arduboy.print("YY");
-    entities[index].yvel /= 2;
+    //Bounce if travelling upwards, but just stop if going down (so you don't bounce on landing)
+    if( entities[index].yvel < 0 ){
+      entities[index].yvel /= -2;
+    }else{
+      entities[index].yvel /= 2;
+    }
   }
 
   //Free if get stuck
