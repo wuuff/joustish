@@ -64,6 +64,6 @@ void loop() {
   stepGame();
   drawGame();
 
-  // then we finaly we tell the arduboy to display what we just wrote to the display
+  // then we finally we tell the arduboy to display what we just wrote to the display
   arduboy.display();
 }

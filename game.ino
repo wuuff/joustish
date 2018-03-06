@@ -2,6 +2,11 @@
 
 struct entity entities[NUM_ENTITIES];
 
+uint8_t wave;
+uint8_t wave_timer;
+uint8_t wave_spawn_type;
+uint8_t wave_spawn_count;
+
 /*
  * This contains the locations of the spawn locations in the map
  */
@@ -32,7 +37,7 @@ void testCollision(uint8_t index){
   uint8_t i;
   for( i = 0; i < NUM_ENTITIES; i++ ){
     //Do not check for collision with self or null entities
-    if( i != index && entities[i].type != TYPE_NULL ){
+    if( i != index && entities[i].type != TYPE_NULL && entities[i].status != STATUS_DEAD && entities[i].status != STATUS_UNDYING){
       //If they are colliding on the x axis (bounding box of 6, not 8) NOW 8
       if( entities[i].x-5*8 < entities[index].x && entities[i].x+5*8 > entities[index].x ){
         //If they are colliding on the y axis (bounding box of 7, not 8) NOW 8
@@ -91,7 +96,16 @@ void stepEntity(uint8_t index){
 
   //Check if entity is dead.  If so, ignore collision with other entities
   if( entities[index].status == STATUS_DEAD ){
-    spawnBird(index);//Temporarily spawn immediately here (TODO: change to spawn after bird goes off screen!)
+    //If dead, attempt to run to the edge of the screen
+    //Random flaps
+    if( rand()%6 == 0 ){
+      entities[index].yvel -= 16;
+    }
+    if( entities[index].x < (SCREEN_WIDTH*8)/2 ){
+      entities[index].xvel -= 2;
+    }else{
+      entities[index].xvel += 2;
+    }
   }else{
     //Test for collision with other entities
     testCollision(index);
@@ -162,12 +176,26 @@ void stepEntity(uint8_t index){
 
   //Wrap left and right
   if( entities[index].x > (SCREEN_WIDTH-7)*8 ){
-    arduboy.print("AAAAAAA");
-    entities[index].x -= (SCREEN_WIDTH-8)*8;
+    if( entities[index].status == STATUS_DEAD ){
+      if( entities[index].type == TYPE_PLAYER ){
+        spawnBird(index); //Respawn player TODO: only respawn if have lives
+      }else{
+        entities[index].type = TYPE_NULL;//Despawn
+      }
+    }else{
+      entities[index].x -= (SCREEN_WIDTH-8)*8;
+    }
   }
   else if( entities[index].x < 0 ){
-    entities[index].x += (SCREEN_WIDTH-8)*8;
-    arduboy.print("BBBBBB");
+    if( entities[index].status == STATUS_DEAD ){
+      if( entities[index].type == TYPE_PLAYER ){
+        spawnBird(index); //Respawn player TODO: only respawn if have lives
+      }else{
+        entities[index].type = TYPE_NULL;//Despawn
+      }
+    }else{
+      entities[index].x += (SCREEN_WIDTH-8)*8;
+    }
   }
 
   /*
@@ -188,13 +216,13 @@ void stepEntity(uint8_t index){
  * by stepEntity if the player cannot move to where they are attempting.
  */
 void stepPlayer(uint8_t index){
-  if( entities[index].status == STATUS_UNDYING ){
-    return;//No moving while spawning
+  entities[index].skid = 0;
+  
+  if( entities[index].status == STATUS_UNDYING || entities[index].status == STATUS_DEAD ){
+    return;//No moving while spawning or dead
   }
   
   uint8_t state = arduboy.buttonsState();
-
-  entities[index].skid = 0;
 
   //Apply left or right velocity
   if( LEFT_BUTTON & state ){
@@ -228,11 +256,12 @@ void stepPlayer(uint8_t index){
  * by stepEntity if the AI cannot move to where it is attempting.
  */
 void stepEnemy(uint8_t index){
-  if( entities[index].status == STATUS_UNDYING ){
-    return;//No moving while spawning
+  entities[index].skid = 0;//Assume not skidding
+    
+  if( entities[index].status == STATUS_UNDYING || entities[index].status == STATUS_DEAD ){
+    return;//No moving while spawning or dead
   }
   
-  entities[index].skid = 0;//Assume not skidding
   //Random flaps
   if( rand()%6 == 0 ){
     entities[index].yvel -= 16;
@@ -276,8 +305,64 @@ void stepEgg(uint8_t index){
   
 }
 
+/*
+ * Search for an empty slot to spawn the entity
+ */
+int8_t trySpawn(uint8_t type){
+  int8_t i;
+  for( i = 0; i < NUM_ENTITIES; i++ ){
+    if( entities[i].type == TYPE_NULL ){
+      entities[i].type = type;
+      return i;
+    }
+  }
+  return -1;
+}
+
+void stepWave(uint8_t all_dead){
+  int8_t spawned;
+  wave_timer++;
+  if( wave_spawn_count > 0 ){
+    if( wave_timer%10 == 0 ){
+      spawned = trySpawn(wave_spawn_type);
+      if( spawned != -1 ){ //If it found a slot for the entity
+        if( entities[spawned].type == TYPE_ENEMY ){
+          spawnBird(spawned);
+        }else{
+          //TODO: egg spawning stuff!
+        }
+        wave_spawn_count--;
+      }
+    }
+  }
+  /*
+   * If all enemies are dead and we're not already spawning,
+   * time to start the new spawn
+   */
+  else if( all_dead ){
+    switch( wave % 5 ){
+      case 0:
+      case 2:
+        wave_spawn_type = TYPE_ENEMY;
+        wave_spawn_count = wave > 7 ? 8 : wave+1;
+        break;
+      case 1:
+      case 3:
+        wave_spawn_type = TYPE_ENEMY;
+        wave_spawn_count = wave > 3 ? 8 : 2*wave+1;
+        break;
+      case 4:
+        wave_spawn_type = TYPE_ENEMY;//TODO: set to be eggs
+        wave_spawn_count = wave > 7 ? 8 : wave+1;
+        break;
+    }
+    wave++;
+  }
+}
+
 void stepGame(){
-  uint8_t i;
+  uint8_t i,all_dead;
+  all_dead = 1;
   for( i = 0; i < NUM_ENTITIES; i++ ){
     switch( entities[i].type ){
       case TYPE_PLAYER:
@@ -287,10 +372,13 @@ void stepGame(){
       case TYPE_ENEMY:
         stepEnemy(i);
         stepEntity(i);
+        all_dead = 0;
         break;
       case TYPE_EGG:
         stepEgg(i);
+        all_dead = 0;
         break;
     }
   }
+  stepWave(all_dead);
 }
