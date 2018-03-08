@@ -34,8 +34,10 @@ void setup() {
   arduboy.setFrameRate(15);
 
   entities[0].type = TYPE_PLAYER;
-  entities[1].type = TYPE_ENEMY;
-  entities[1].x = 8;
+  entities[0].x = 8*52;
+  entities[0].y = 8*25;
+  //entities[1].type = TYPE_ENEMY;
+  //entities[1].x = 8;
   /*entities[2].type = TYPE_ENEMY;
   entities[2].x = 8;*/
 }

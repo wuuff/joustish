@@ -81,6 +81,36 @@ void testCollision(uint8_t index){
 }
 
 /*
+ * Check if player is colliding with world geometry from its x movement
+ */
+uint8_t checkWorldX(uint8_t i){
+  uint8_t y;
+  //Check y coordinates 1 pixel in from top and bottom
+  for( y = 1; y <= 7; y++ ){
+    //Check collision 2 pixels in from each side
+    if( arduboy.getPixel((uint16_t)(entities[i].x + entities[i].xvel)/8+2, (uint16_t)entities[i].y/8+y) == WHITE ||
+        arduboy.getPixel((uint16_t)(entities[i].x + entities[i].xvel)/8+6, (uint16_t)entities[i].y/8+y) == WHITE ){
+          return 1;
+    }
+  }
+}
+
+/*
+ * Check if player is colliding with world geometry from its y movement
+ */
+uint8_t checkWorldY(uint8_t i){
+  uint8_t y;
+  //Check y coordinates 1 pixel in from top and bottom
+  for( y = 1; y <= 7; y++ ){
+    //Check collision 2 pixels in from each side
+    if( arduboy.getPixel((uint16_t)entities[i].x/8+2, (uint16_t)(entities[i].y + entities[i].yvel)/8+y) == WHITE ||
+        arduboy.getPixel((uint16_t)entities[i].x/8+6, (uint16_t)(entities[i].y + entities[i].yvel)/8+y) == WHITE ){
+          return 1;
+    }
+  }
+}
+
+/*
  * Step movement for entities, checking world and entity collision.
  * This does not include the inputs by the entity (AI or player input).
  */
@@ -118,29 +148,14 @@ void stepEntity(uint8_t index){
   else if( entities[index].xvel < -VEL_MAX ) entities[index].xvel = -VEL_MAX;
 
   //Test world collision (x)
-  while( entities[index].xvel != 0 && 
-      //Top left, top right, bottom left, bottom right, mid left, mid right
-      (arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+2, (uint16_t)entities[index].y/8+4) == WHITE || 
-      arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+6, (uint16_t)entities[index].y/8+4) == WHITE || 
-      arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+2, (uint16_t)entities[index].y/8+7) == WHITE || 
-      arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+6, (uint16_t)entities[index].y/8+7) == WHITE ||
-      arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+2, (uint16_t)entities[index].y/8+6) == WHITE ||
-      arduboy.getPixel((uint16_t)(entities[index].x + entities[index].xvel)/8+6, (uint16_t)entities[index].y/8+6) == WHITE ) ){
-  //arduboy.print("XX");
+  while( entities[index].xvel != 0 && checkWorldX(index) ){
     entities[index].xvel /= -2;
   }
   //arduboy.print( arduboy.getPixel((uint16_t)entities[index].x/8, (uint16_t)(entities[index].y + entities[index].yvel)/8) );
   //Test world collision (y)
-  while( entities[index].yvel != 0 &&
-      (arduboy.getPixel((uint16_t)entities[index].x/8+2, (uint16_t)(entities[index].y + entities[index].yvel)/8+1) == WHITE || 
-      arduboy.getPixel((uint16_t)entities[index].x/8+6, (uint16_t)(entities[index].y + entities[index].yvel)/8+1) == WHITE || 
-      arduboy.getPixel((uint16_t)entities[index].x/8+2, (uint16_t)(entities[index].y + entities[index].yvel)/8+7) == WHITE || 
-      arduboy.getPixel((uint16_t)entities[index].x/8+6, (uint16_t)(entities[index].y + entities[index].yvel)/8+7) == WHITE ||
-      arduboy.getPixel((uint16_t)entities[index].x/8+2, (uint16_t)(entities[index].y + entities[index].yvel)/8+4) == WHITE ||
-      arduboy.getPixel((uint16_t)entities[index].x/8+6, (uint16_t)(entities[index].y + entities[index].yvel)/8+4) == WHITE ||
+  while( entities[index].yvel != 0 && ( checkWorldY(index) ||
       (entities[index].y + entities[index].yvel)/8 > (SCREEN_HEIGHT-10) ||
       (entities[index].y + entities[index].yvel) < 0 ) ){
-        //arduboy.print("YY");
     //Bounce if travelling upwards, but just stop if going down (so you don't bounce on landing)
     if( entities[index].yvel < 0 ){
       entities[index].yvel /= -2;
@@ -150,12 +165,7 @@ void stepEntity(uint8_t index){
   }
 
   //Free if get stuck
-  if( arduboy.getPixel((uint16_t)entities[index].x/8+2, (uint16_t)entities[index].y/8+4) == WHITE || 
-      arduboy.getPixel((uint16_t)entities[index].x/8+6, (uint16_t)entities[index].y/8+4) == WHITE || 
-      arduboy.getPixel((uint16_t)entities[index].x/8+2, (uint16_t)entities[index].y/8+7) == WHITE || 
-      arduboy.getPixel((uint16_t)entities[index].x/8+6, (uint16_t)entities[index].y/8+7) == WHITE ||
-      arduboy.getPixel((uint16_t)entities[index].x/8+2, (uint16_t)entities[index].y/8+6) == WHITE ||
-      arduboy.getPixel((uint16_t)entities[index].x/8+6, (uint16_t)entities[index].y/8+6) == WHITE ){
+  if( checkWorldY(index) ){
      entities[index].yvel -= 4;
    }
   
