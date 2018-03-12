@@ -32,6 +32,20 @@ struct coord egg_spawn_points[NUM_EGG_SPAWNS] = {
 };
 
 /*
+ * Search for an empty slot to spawn an entity
+ */
+int8_t trySpawn(uint8_t type){
+  int8_t i;
+  for( i = 0; i < NUM_ENTITIES; i++ ){
+    if( entities[i].type == TYPE_NULL ){
+      entities[i].type = type;
+      return i;
+    }
+  }
+  return -1;
+}
+
+/*
  * Spawn a player or enemy by choosing a spawn location
  */
 void spawnBird(uint8_t index){
@@ -44,13 +58,16 @@ void spawnBird(uint8_t index){
   entities[index].anim = 0;// Reset animation, as we use this to animate the spawning
 }
 
+/*
+ * Spawn an egg by choosing a spawn location
+ */
 void spawnEgg(uint8_t index){
   uint8_t loc = rand()%NUM_EGG_SPAWNS;// Choose spawn location randomly
   entities[index].x = egg_spawn_points[loc].x*8;
   entities[index].y = egg_spawn_points[loc].y*8;
   entities[index].xvel = 0;
   entities[index].yvel = 0;
-  entities[index].status = STATUS_NORMAL;// Just a normal egg
+  entities[index].status = STATUS_UNDYING;// Unvulnerable when it first spawns
   entities[index].anim = 0;// Reset animation, as we use this to animate the spawning
 }
 
@@ -59,6 +76,7 @@ void spawnEgg(uint8_t index){
  */
 void testCollision(uint8_t index){
   uint8_t i;
+  int8_t egg;
   for( i = 0; i < NUM_ENTITIES; i++ ){
     //Do not check for collision with self or null entities
     if( i != index && entities[i].type != TYPE_NULL && entities[i].status != STATUS_DEAD && entities[i].status != STATUS_UNDYING){
@@ -77,6 +95,17 @@ void testCollision(uint8_t index){
             if( entities[index].y/8 < entities[i].y/8 ){
               arduboy.print(F("ENEM"));
               entities[i].status = STATUS_DEAD;
+              egg = trySpawn(TYPE_EGG);
+              //If egg successfully spawned (if not, just silently fail to spawn egg)
+              if( egg != -1 ){
+                //Give egg same position as parent bird, but double x velocity
+                entities[egg].x = entities[i].x;
+                entities[egg].y = entities[i].y;
+                entities[egg].xvel = entities[i].xvel*2;
+                entities[egg].yvel = entities[i].yvel;
+                entities[egg].status = STATUS_UNDYING;// Just a normal egg
+                entities[egg].anim = 0;// Reset animation, as we use this to animate the spawning
+              }
             }//If enemy is higher, player dies
             else if( entities[index].y/8 > entities[i].y/8 ){
               arduboy.print(F("PLAY"));
@@ -94,6 +123,17 @@ void testCollision(uint8_t index){
             else if( entities[index].y/8 > entities[i].y/8 ){
               arduboy.print(F("ENEM"));
               entities[index].status = STATUS_DEAD;
+              egg = trySpawn(TYPE_EGG);
+              //If egg successfully spawned (if not, just silently fail to spawn egg)
+              if( egg != -1 ){
+                //Give egg same position as parent bird, but double x velocity
+                entities[egg].x = entities[index].x;
+                entities[egg].y = entities[index].y;
+                entities[egg].xvel = entities[index].xvel*2;
+                entities[egg].yvel = entities[index].yvel;
+                entities[egg].status = STATUS_UNDYING;// Just a normal egg
+                entities[egg].anim = 0;// Reset animation, as we use this to animate the spawning
+              }
             }
             //If they are even, they just bounce
           }
@@ -102,9 +142,9 @@ void testCollision(uint8_t index){
             entities[i].type = TYPE_NULL;//Immediately despawn the egg
           }
           //If the colliding entities are an egg and the player
-          else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_EGG) ){
+          /*else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_EGG) ){
             entities[index].type = TYPE_NULL;//Immediately despawn the egg
-          }
+          }*/
           if(index == 0) arduboy.print(F("HIT"));
         }
       }
@@ -148,7 +188,7 @@ uint8_t checkWorldY(uint8_t i){
  */
 void stepEntity(uint8_t index){
   //Check if currently spawning.  If so, do not interact with other entities.
-  if( entities[index].status == STATUS_UNDYING ){
+  if( entities[index].type != TYPE_EGG && entities[index].status == STATUS_UNDYING ){
     //If spawn animation is done, remove invulnerability
     if( entities[index].anim == 32 ){
       entities[index].status = STATUS_NORMAL; //Finish spawning
@@ -345,25 +385,21 @@ void stepEnemy(uint8_t index){
 
 void stepEgg(uint8_t index){
   entities[index].yvel += GRAVITY;
+  //Apply friction to egg
+  if( entities[index].xvel > 0 ){
+    entities[index].xvel--;
+  }else if( entities[index].xvel < 0 ){
+    entities[index].xvel++;
+  }
+  //If the animation indicates that egg invulnerability should have worn off
+  if( entities[index].anim >= 16 ){
+    entities[index].status = STATUS_NORMAL;
+  }
   //If the animation indicates the egg should hatch
   if( entities[index].anim == 255 ){
     entities[index].type = TYPE_ENEMY;//Despawn egg, spawn enemy
     entities[index].status = STATUS_NORMAL;
   }
-}
-
-/*
- * Search for an empty slot to spawn the entity
- */
-int8_t trySpawn(uint8_t type){
-  int8_t i;
-  for( i = 0; i < NUM_ENTITIES; i++ ){
-    if( entities[i].type == TYPE_NULL ){
-      entities[i].type = type;
-      return i;
-    }
-  }
-  return -1;
 }
 
 void stepWave(uint8_t all_dead){
