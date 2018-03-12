@@ -86,6 +86,13 @@ const unsigned char enemySprites[] PROGMEM = {
   0xb, 0x16, 0x3e, 0x3f, 0x18, 0xf, 0xb, 0xa, */
 };
 
+const unsigned char eggSprites[] PROGMEM = {
+  //Egg
+0x00, 0x30, 0x78, 0xfc, 0xfc, 0x78, 0x30, 0x00, 
+  //Egg hatching
+0x30, 0x78, 0xfc, 0x88, 0x20, 0xfc, 0x78, 0x30, 
+};
+
 /*
  * Step the animation of the entity forward.
  * The state of the entity influences how the animation advances.
@@ -167,7 +174,14 @@ void drawGame(){
         }
         break;
       case TYPE_EGG:
-        
+        entities[i].anim++;
+        //If animation is less than 3/4 completed, don't show it starting to hatch
+        if( entities[i].anim < 192 ){
+          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, eggSprites, 8, 8, WHITE);
+        }else{
+          //Show egg starting to hatch
+          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, eggSprites+8, 8, 8, WHITE);
+        }
         break;
     }
   }

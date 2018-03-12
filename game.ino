@@ -18,6 +18,20 @@ struct coord spawn_points[NUM_SPAWNS] = {
 };
 
 /*
+ * This contains the locations of egg spawn locations in the map
+ */
+struct coord egg_spawn_points[NUM_EGG_SPAWNS] = {
+  {4,1},
+  {57,2},
+  {116,1},
+  {11,17},
+  {52,21},
+  {93,11},
+  {30,42},
+  {82,42},
+};
+
+/*
  * Spawn a player or enemy by choosing a spawn location
  */
 void spawnBird(uint8_t index){
@@ -27,6 +41,16 @@ void spawnBird(uint8_t index){
   entities[index].xvel = 0;
   entities[index].yvel = 0;
   entities[index].status = STATUS_UNDYING;// Invulnerable when it first spawns
+  entities[index].anim = 0;// Reset animation, as we use this to animate the spawning
+}
+
+void spawnEgg(uint8_t index){
+  uint8_t loc = rand()%NUM_EGG_SPAWNS;// Choose spawn location randomly
+  entities[index].x = egg_spawn_points[loc].x*8;
+  entities[index].y = egg_spawn_points[loc].y*8;
+  entities[index].xvel = 0;
+  entities[index].yvel = 0;
+  entities[index].status = STATUS_NORMAL;// Just a normal egg
   entities[index].anim = 0;// Reset animation, as we use this to animate the spawning
 }
 
@@ -72,6 +96,14 @@ void testCollision(uint8_t index){
               entities[index].status = STATUS_DEAD;
             }
             //If they are even, they just bounce
+          }
+          //If the colliding entities are the player and an egg
+          else if( (entities[index].type == TYPE_PLAYER && entities[i].type == TYPE_EGG) ){
+            entities[i].type = TYPE_NULL;//Immediately despawn the egg
+          }
+          //If the colliding entities are an egg and the player
+          else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_EGG) ){
+            entities[index].type = TYPE_NULL;//Immediately despawn the egg
           }
           if(index == 0) arduboy.print(F("HIT"));
         }
@@ -312,7 +344,12 @@ void stepEnemy(uint8_t index){
 }
 
 void stepEgg(uint8_t index){
-  
+  entities[index].yvel += GRAVITY;
+  //If the animation indicates the egg should hatch
+  if( entities[index].anim == 255 ){
+    entities[index].type = TYPE_ENEMY;//Despawn egg, spawn enemy
+    entities[index].status = STATUS_NORMAL;
+  }
 }
 
 /*
@@ -330,7 +367,7 @@ int8_t trySpawn(uint8_t type){
 }
 
 void stepWave(uint8_t all_dead){
-  int8_t spawned;
+  int8_t spawned, w;
   wave_timer++;
   if( wave_spawn_count > 0 ){
     if( wave_timer%10 == 0 ){
@@ -339,7 +376,7 @@ void stepWave(uint8_t all_dead){
         if( entities[spawned].type == TYPE_ENEMY ){
           spawnBird(spawned);
         }else{
-          //TODO: egg spawning stuff!
+          spawnEgg(spawned);
         }
         wave_spawn_count--;
       }
@@ -350,19 +387,28 @@ void stepWave(uint8_t all_dead){
    * time to start the new spawn
    */
   else if( all_dead ){
-    switch( wave % 5 ){
+    w = wave % 10;
+    switch( w ){
       case 0:
       case 2:
+      case 5:
+      case 7:
+        //Standard wave
         wave_spawn_type = TYPE_ENEMY;
-        wave_spawn_count = wave > 7 ? 8 : wave+1;
+        wave_spawn_count = w > 7 ? 8 : w+1;
         break;
       case 1:
       case 3:
+      case 6:
+      case 8:
+        //Survival wave
         wave_spawn_type = TYPE_ENEMY;
-        wave_spawn_count = wave > 3 ? 8 : 2*wave+1;
+        wave_spawn_count = w > 7 ? 8 : w+1;
         break;
       case 4:
-        wave_spawn_type = TYPE_ENEMY;//TODO: set to be eggs
+      case 9:
+        //Egg wave
+        wave_spawn_type = TYPE_EGG;
         wave_spawn_count = wave > 7 ? 8 : wave+1;
         break;
     }
@@ -386,6 +432,7 @@ void stepGame(){
         break;
       case TYPE_EGG:
         stepEgg(i);
+        stepEntity(i);
         all_dead = 0;
         break;
     }

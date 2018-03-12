@@ -37,6 +37,7 @@ struct coord{
 
 #define NUM_ENTITIES 8
 #define NUM_SPAWNS 4
+#define NUM_EGG_SPAWNS 8
 
 extern struct entity entities[NUM_ENTITIES];
 
