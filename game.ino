@@ -157,14 +157,17 @@ void testCollision(uint8_t index){
  */
 uint8_t checkWorldX(uint8_t i){
   uint8_t y;
+  uint16_t x;
   //Check y coordinates 1 pixel in from top and bottom
   for( y = 1; y <= 7; y++ ){
-    //Check collision 2 pixels in from each side
-    if( arduboy.getPixel((uint16_t)(entities[i].x + entities[i].xvel)/8+2, (uint16_t)entities[i].y/8+y) == WHITE ||
-        arduboy.getPixel((uint16_t)(entities[i].x + entities[i].xvel)/8+6, (uint16_t)entities[i].y/8+y) == WHITE ){
+    //Check collision 2 pixels in from each side (but don't check collision if it's offscreen)
+    x = (uint16_t)(entities[i].x + entities[i].xvel)/8;
+    if( x+8 < 128 && x-8 < 256 && ( arduboy.getPixel(x+2, (uint16_t)entities[i].y/8+y) == WHITE ||
+        arduboy.getPixel(x+6, (uint16_t)entities[i].y/8+y) == WHITE ) ){
           return 1;
     }
   }
+  return 0;
 }
 
 /*
@@ -180,6 +183,7 @@ uint8_t checkWorldY(uint8_t i){
           return 1;
     }
   }
+  return 0;
 }
 
 /*
@@ -236,8 +240,8 @@ void stepEntity(uint8_t index){
     }
   }
 
-  //Free if get stuck
-  if( checkWorldY(index) ){
+  //Free if get stuck (but only if not offscreen, because offscreen we can't reliably check collision)
+  if( entities[index].x > 0 && entities[index].x < (128-8)*8 && checkWorldY(index) ){
      entities[index].yvel -= 4;
    }
   
@@ -257,7 +261,7 @@ void stepEntity(uint8_t index){
    }
 
   //Wrap left and right
-  if( entities[index].x > (SCREEN_WIDTH-7)*8 ){
+  if( entities[index].x > (SCREEN_WIDTH-4)*8 ){
     if( entities[index].status == STATUS_DEAD ){
       if( entities[index].type == TYPE_PLAYER ){
         spawnBird(index); //Respawn player TODO: only respawn if have lives
@@ -265,10 +269,10 @@ void stepEntity(uint8_t index){
         entities[index].type = TYPE_NULL;//Despawn
       }
     }else{
-      entities[index].x -= (SCREEN_WIDTH-8)*8;
+      entities[index].x -= (SCREEN_WIDTH)*8;
     }
   }
-  else if( entities[index].x < 0 ){
+  else if( entities[index].x+(8*4) < 0 ){
     if( entities[index].status == STATUS_DEAD ){
       if( entities[index].type == TYPE_PLAYER ){
         spawnBird(index); //Respawn player TODO: only respawn if have lives
@@ -276,7 +280,7 @@ void stepEntity(uint8_t index){
         entities[index].type = TYPE_NULL;//Despawn
       }
     }else{
-      entities[index].x += (SCREEN_WIDTH-8)*8;
+      entities[index].x += (SCREEN_WIDTH)*8;
     }
   }
 

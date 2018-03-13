@@ -153,6 +153,7 @@ uint8_t getSpriteOffset(uint8_t i){
 
 void drawGame(){
   uint8_t i, sprOff;
+  int16_t xdraw;
   for( i = 0; i < NUM_ENTITIES; i++ ){
     switch( entities[i].type ){
       case TYPE_PLAYER:
@@ -161,7 +162,10 @@ void drawGame(){
         if( entities[i].status == STATUS_UNDYING ){
           arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
         }else{
-          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
+          //Enable drawing off the left side of the screen
+          xdraw = ((uint16_t)entities[i].x)/8;
+          if( xdraw > 256 ) xdraw -= 8192;// 65536/8
+          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
         }
         break;
       case TYPE_ENEMY:
@@ -170,17 +174,23 @@ void drawGame(){
         if( entities[i].status == STATUS_UNDYING ){
           arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), enemySprites+sprOff, 8, entities[i].anim/4, WHITE);
         }else{
-          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
+          //Enable drawing off the left side of the screen
+          xdraw = ((uint16_t)entities[i].x)/8;
+          if( xdraw > 256 ) xdraw -= 8192;// 65536/8
+          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
         }
         break;
       case TYPE_EGG:
         entities[i].anim++;
+        //Enable drawing off the left side of the screen
+        xdraw = ((uint16_t)entities[i].x)/8;
+        if( xdraw > 256 ) xdraw -= 8192;// 65536/8
         //If animation is less than 3/4 completed, don't show it starting to hatch
         if( entities[i].anim < 192 ){
-          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, eggSprites, 8, 8, WHITE);
+          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites, 8, 8, WHITE);
         }else{
           //Show egg starting to hatch
-          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8, eggSprites+8, 8, 8, WHITE);
+          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites+8, 8, 8, WHITE);
         }
         break;
     }
