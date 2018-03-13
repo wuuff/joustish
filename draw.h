@@ -1,3 +1,4 @@
+extern void drawBackground();
 extern void drawGame();
 
 #define ANIM_WALK 16

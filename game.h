@@ -40,6 +40,7 @@ struct coord{
 #define NUM_EGG_SPAWNS 8
 
 extern struct entity entities[NUM_ENTITIES];
+extern uint8_t wave;
 
 extern void stepGame();
 

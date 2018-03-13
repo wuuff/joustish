@@ -429,18 +429,24 @@ void stepWave(uint8_t all_dead){
   else if( all_dead ){
     w = wave % 10;
     switch( w ){
-      case 0:
-      case 2:
       case 5:
       case 7:
+        //Reduce amount of enemies after egg waves by 1
+        //So that we have the progression: 1,2,3,4,5 eggs,5,6,7,8,8 eggs
+        w--;
+      case 0:
+      case 2:
         //Standard wave
         wave_spawn_type = TYPE_ENEMY;
         wave_spawn_count = w > 7 ? 8 : w+1;
         break;
-      case 1:
-      case 3:
       case 6:
       case 8:
+        //Reduce amount of enemies after egg waves by 1
+        //So that we have the progression: 1,2,3,4,5 eggs,5,6,7,8,8 eggs
+        w--;
+      case 1:
+      case 3:
         //Survival wave
         wave_spawn_type = TYPE_ENEMY;
         wave_spawn_count = w > 7 ? 8 : w+1;
