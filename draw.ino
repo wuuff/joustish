@@ -157,6 +157,24 @@ uint8_t getSpriteOffset(uint8_t i){
 
 void drawBackground(){
   arduboy.drawBitmap(0, 0, background, 128, 64, WHITE);
+  /*
+   * There are several regions in the stage that we overwrite
+   * with black rectangles to erase them in later waves
+   */
+  if( wave >= 11 ){
+    //Fill top platform
+    arduboy.fillRect(0,10,15,5,BLACK);
+    arduboy.fillRect(107,10,21,5,BLACK);
+  }
+  if( wave >= 21 ){
+    //Fill middle platform
+    arduboy.fillRect(44,37,30,5,BLACK);
+  }
+  if( wave >= 31 ){
+    //Fill walkway over lava
+    arduboy.fillRect(0,56,25,3,BLACK);
+    arduboy.fillRect(102,56,26,3,BLACK);
+  }
 }
 
 void drawGame(){

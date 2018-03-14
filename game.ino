@@ -303,6 +303,11 @@ void stepEntity(uint8_t index){
  */
 void stepPlayer(uint8_t index){
   entities[index].skid = 0;
+
+  //If player is touching the lava, they die
+  if( entities[index].y >= (62-8)*8 ){
+    entities[index].status = STATUS_DEAD;
+  }
   
   if( entities[index].status == STATUS_UNDYING || entities[index].status == STATUS_DEAD ){
     return;//No moving while spawning or dead
@@ -348,6 +353,10 @@ void stepEnemy(uint8_t index){
     return;//No moving while spawning or dead
   }
   
+  //Flap hard if close to lava
+  if( entities[index].y > (58-8)*8 ){
+    entities[index].yvel -= 32;
+  }
   //Random flaps
   if( rand()%6 == 0 ){
     entities[index].yvel -= 16;
