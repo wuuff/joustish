@@ -436,6 +436,7 @@ void stepWave(uint8_t all_dead){
    * time to start the new spawn
    */
   else if( all_dead ){
+    wave_timer = 0;
     w = wave % 10;
     switch( w ){
       case 5:

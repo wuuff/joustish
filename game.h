@@ -41,6 +41,7 @@ struct coord{
 
 extern struct entity entities[NUM_ENTITIES];
 extern uint8_t wave;
+extern uint8_t wave_spawn_count;
 
 extern void stepGame();
 
