@@ -6,6 +6,10 @@ uint8_t wave;
 uint8_t wave_timer;
 uint8_t wave_spawn_type;
 uint8_t wave_spawn_count;
+uint8_t survival_bonus = 0;
+
+uint8_t lives;
+uint32_t score;
 
 /*
  * This contains the locations of the spawn locations in the map
@@ -30,6 +34,21 @@ struct coord egg_spawn_points[NUM_EGG_SPAWNS] = {
   {30,42},
   {82,42},
 };
+
+#define POINTS_BIRD 500
+#define POINTS_EGG 250
+#define POINTS_SURVIVE 1000
+#define NEW_BIRD 5000
+/*
+ * Add a value to the score.  Every NEW_BIRD
+ * points, add a life.
+ */
+void addScore(uint16_t amount){
+  if( score/NEW_BIRD < (score+amount)/5000 ){
+    lives++;
+  }
+  score += amount;
+}
 
 /*
  * Search for an empty slot to spawn an entity
@@ -95,6 +114,7 @@ void testCollision(uint8_t index){
             if( entities[index].y/8 < entities[i].y/8 ){
               arduboy.print(F("ENEM"));
               entities[i].status = STATUS_DEAD;
+              addScore(POINTS_BIRD);
               egg = trySpawn(TYPE_EGG);
               //If egg successfully spawned (if not, just silently fail to spawn egg)
               if( egg != -1 ){
@@ -110,6 +130,8 @@ void testCollision(uint8_t index){
             else if( entities[index].y/8 > entities[i].y/8 ){
               arduboy.print(F("PLAY"));
               entities[index].status = STATUS_DEAD;
+              lives--;
+              survival_bonus = 0;
             }
             //If they are even, they just bounce
           }
@@ -119,10 +141,13 @@ void testCollision(uint8_t index){
             if( entities[index].y/8 < entities[i].y/8 ){
               arduboy.print(F("PLAY"));
               entities[i].status = STATUS_DEAD;
+              lives--;
+              survival_bonus = 0;
             }//If player is higher, enemy dies
             else if( entities[index].y/8 > entities[i].y/8 ){
               arduboy.print(F("ENEM"));
               entities[index].status = STATUS_DEAD;
+              addScore(POINTS_BIRD);
               egg = trySpawn(TYPE_EGG);
               //If egg successfully spawned (if not, just silently fail to spawn egg)
               if( egg != -1 ){
@@ -140,6 +165,7 @@ void testCollision(uint8_t index){
           //If the colliding entities are the player and an egg
           else if( (entities[index].type == TYPE_PLAYER && entities[i].type == TYPE_EGG) ){
             entities[i].type = TYPE_NULL;//Immediately despawn the egg
+            addScore(POINTS_EGG);
           }
           //If the colliding entities are an egg and the player
           /*else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_EGG) ){
@@ -307,6 +333,8 @@ void stepPlayer(uint8_t index){
   //If player is touching the lava, they die
   if( entities[index].y >= (62-8)*8 ){
     entities[index].status = STATUS_DEAD;
+    lives--;
+    survival_bonus = 0;
   }
   
   if( entities[index].status == STATUS_UNDYING || entities[index].status == STATUS_DEAD ){
@@ -436,6 +464,11 @@ void stepWave(uint8_t all_dead){
    * time to start the new spawn
    */
   else if( all_dead ){
+    //Check if the player survived the previous wave without dying
+    //If so, give them bonus points!
+    if( survival_bonus ){
+      addScore(POINTS_SURVIVE);
+    }
     wave_timer = 0;
     w = wave % 10;
     switch( w ){
@@ -449,6 +482,7 @@ void stepWave(uint8_t all_dead){
         //Standard wave
         wave_spawn_type = TYPE_ENEMY;
         wave_spawn_count = w > 7 ? 8 : w+1;
+        survival_bonus = 0;
         break;
       case 6:
       case 8:
@@ -460,12 +494,14 @@ void stepWave(uint8_t all_dead){
         //Survival wave
         wave_spawn_type = TYPE_ENEMY;
         wave_spawn_count = w > 7 ? 8 : w+1;
+        survival_bonus = 1;
         break;
       case 4:
       case 9:
         //Egg wave
         wave_spawn_type = TYPE_EGG;
         wave_spawn_count = wave > 7 ? 8 : wave+1;
+        survival_bonus = 0;
         break;
     }
     wave++;

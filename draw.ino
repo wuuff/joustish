@@ -195,6 +195,18 @@ void drawText(){
       tinyfont.print("SURVIVAL");
     }
   }
+  //Draw lives and score
+  tinyfont.setTextColor(BLACK);
+  tinyfont.setCursor(31,59);
+  tinyfont.print("Lx");
+  if( lives < 10 ) tinyfont.print(0);
+  tinyfont.print(lives);
+  tinyfont.setCursor(68,59);
+  if( score < 10000 ) tinyfont.print(0);
+  if( score < 1000 ) tinyfont.print(0);
+  if( score < 100 ) tinyfont.print(0);
+  if( score < 10 ) tinyfont.print(0);
+  tinyfont.print(score);
 }
 
 void drawGame(){

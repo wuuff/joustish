@@ -29,6 +29,8 @@ void setup() {
   // default 60 and it saves us battery life
   arduboy.setFrameRate(15);
 
+  lives = 5;
+  score = 0;
   entities[0].type = TYPE_PLAYER;
   entities[0].x = 8*52;
   entities[0].y = 8*25;
