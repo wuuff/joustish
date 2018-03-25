@@ -182,23 +182,23 @@ void drawText(){
   Tinyfont tinyfont = Tinyfont(arduboy.sBuffer, Arduboy2::width(), Arduboy2::height());
   if( wave_spawn_count > 0 ){
     tinyfont.setCursor(Arduboy2::width()/2-24,Arduboy2::height()/2-8);
-    tinyfont.print("WAVE ");
+    tinyfont.print(F("WAVE "));
     if( wave < 10 ){
       tinyfont.print(0);
     }
     tinyfont.print(wave);
     if( wave % 5 == 0 ){
       tinyfont.setCursor(Arduboy2::width()/2-14,Arduboy2::height()/2-2);
-      tinyfont.print("EGG");
+      tinyfont.print(F("EGG"));
     }else if( (wave % 5) % 2 == 0 ){
       tinyfont.setCursor(Arduboy2::width()/2-26,Arduboy2::height()/2-2);
-      tinyfont.print("SURVIVAL");
+      tinyfont.print(F("SURVIVAL"));
     }
   }
   //Draw lives and score
   tinyfont.setTextColor(BLACK);
   tinyfont.setCursor(31,59);
-  tinyfont.print("Lx");
+  tinyfont.print(F("Lx"));
   if( lives < 10 ) tinyfont.print(0);
   tinyfont.print(lives);
   tinyfont.setCursor(68,59);
@@ -212,46 +212,63 @@ void drawText(){
 void drawGame(){
   uint8_t i, sprOff;
   int16_t xdraw;
-  for( i = 0; i < NUM_ENTITIES; i++ ){
-    switch( entities[i].type ){
-      case TYPE_PLAYER:
-        sprOff = getSpriteOffset(i);
-        //If spawning, make it rise out of the spawn area
-        if( entities[i].status == STATUS_UNDYING ){
-          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
-        }else{
-          //Enable drawing off the left side of the screen
-          xdraw = ((uint16_t)entities[i].x)/8;
-          if( xdraw > 256 ) xdraw -= 8192;// 65536/8
-          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
+  switch( game_mode ){
+    case MODE_TITLE:
+      //TODO
+      break;
+    case MODE_GAME:
+      for( i = 0; i < NUM_ENTITIES; i++ ){
+        switch( entities[i].type ){
+          case TYPE_PLAYER:
+            sprOff = getSpriteOffset(i);
+            //If spawning, make it rise out of the spawn area
+            if( entities[i].status == STATUS_UNDYING ){
+              arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
+            }else{
+              //Enable drawing off the left side of the screen
+              xdraw = ((uint16_t)entities[i].x)/8;
+              if( xdraw > 256 ) xdraw -= 8192;// 65536/8
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
+            }
+            break;
+          case TYPE_ENEMY:
+            sprOff = getSpriteOffset(i);
+            //If spawning, make it rise out of the spawn area
+            if( entities[i].status == STATUS_UNDYING ){
+              arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), enemySprites+sprOff, 8, entities[i].anim/4, WHITE);
+            }else{
+              //Enable drawing off the left side of the screen
+              xdraw = ((uint16_t)entities[i].x)/8;
+              if( xdraw > 256 ) xdraw -= 8192;// 65536/8
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
+            }
+            break;
+          case TYPE_EGG:
+            entities[i].anim++;
+            //Enable drawing off the left side of the screen
+            xdraw = ((uint16_t)entities[i].x)/8;
+            if( xdraw > 256 ) xdraw -= 8192;// 65536/8
+            //If animation is less than 3/4 completed, don't show it starting to hatch
+            if( entities[i].anim < 192 ){
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites, 8, 8, WHITE);
+            }else{
+              //Show egg starting to hatch
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites+8, 8, 8, WHITE);
+            }
+            break;
         }
-        break;
-      case TYPE_ENEMY:
-        sprOff = getSpriteOffset(i);
-        //If spawning, make it rise out of the spawn area
-        if( entities[i].status == STATUS_UNDYING ){
-          arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), enemySprites+sprOff, 8, entities[i].anim/4, WHITE);
-        }else{
-          //Enable drawing off the left side of the screen
-          xdraw = ((uint16_t)entities[i].x)/8;
-          if( xdraw > 256 ) xdraw -= 8192;// 65536/8
-          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
-        }
-        break;
-      case TYPE_EGG:
-        entities[i].anim++;
-        //Enable drawing off the left side of the screen
-        xdraw = ((uint16_t)entities[i].x)/8;
-        if( xdraw > 256 ) xdraw -= 8192;// 65536/8
-        //If animation is less than 3/4 completed, don't show it starting to hatch
-        if( entities[i].anim < 192 ){
-          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites, 8, 8, WHITE);
-        }else{
-          //Show egg starting to hatch
-          arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites+8, 8, 8, WHITE);
-        }
-        break;
-    }
+      }
+      drawText();
+      break;
+    case MODE_DEAD:
+      arduboy.setCursor(128/2-4*5,16);
+      arduboy.print(F("GAME OVER"));
+      break;
+    case MODE_HIGHSCORE:
+      arduboy.setCursor(128/2-4*5,16);
+      arduboy.print(F("GAME OVER"));
+      arduboy.setCursor(128/2-6*5,24);
+      arduboy.print(F("NEW HIGHSCORE"));
+      break;
   }
-  drawText();
 }

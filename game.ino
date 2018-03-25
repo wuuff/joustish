@@ -1,4 +1,5 @@
 #include "game.h"
+#include "highscores.h"
 
 struct entity entities[NUM_ENTITIES];
 
@@ -10,6 +11,8 @@ uint8_t survival_bonus = 0;
 
 uint8_t lives;
 uint32_t score;
+
+uint8_t game_mode;
 
 /*
  * This contains the locations of the spawn locations in the map
@@ -290,7 +293,11 @@ void stepEntity(uint8_t index){
   if( entities[index].x > (SCREEN_WIDTH-4)*8 ){
     if( entities[index].status == STATUS_DEAD ){
       if( entities[index].type == TYPE_PLAYER ){
-        spawnBird(index); //Respawn player TODO: only respawn if have lives
+        if( lives > 0 ){
+          spawnBird(index); //Respawn player
+        }else{
+          
+        }
       }else{
         entities[index].type = TYPE_NULL;//Despawn
       }
@@ -510,24 +517,35 @@ void stepWave(uint8_t all_dead){
 
 void stepGame(){
   uint8_t i,all_dead;
-  all_dead = 1;
-  for( i = 0; i < NUM_ENTITIES; i++ ){
-    switch( entities[i].type ){
-      case TYPE_PLAYER:
-        stepPlayer(i);
-        stepEntity(i);
-        break;
-      case TYPE_ENEMY:
-        stepEnemy(i);
-        stepEntity(i);
-        all_dead = 0;
-        break;
-      case TYPE_EGG:
-        stepEgg(i);
-        stepEntity(i);
-        all_dead = 0;
-        break;
-    }
+  switch( game_mode ){
+    case MODE_TITLE:
+      //TODO
+      break;
+    case MODE_GAME:
+      all_dead = 1;
+      for( i = 0; i < NUM_ENTITIES; i++ ){
+        switch( entities[i].type ){
+          case TYPE_PLAYER:
+            stepPlayer(i);
+            stepEntity(i);
+            break;
+          case TYPE_ENEMY:
+            stepEnemy(i);
+            stepEntity(i);
+            all_dead = 0;
+            break;
+          case TYPE_EGG:
+            stepEgg(i);
+            stepEntity(i);
+            all_dead = 0;
+            break;
+        }
+      }
+      stepWave(all_dead);
+      break;
+    case MODE_DEAD:
+      break;
+    case MODE_HIGHSCORE:
+      break;
   }
-  stepWave(all_dead);
 }

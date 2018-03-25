@@ -39,11 +39,17 @@ struct coord{
 #define NUM_SPAWNS 4
 #define NUM_EGG_SPAWNS 8
 
+#define MODE_TITLE 0
+#define MODE_GAME 1
+#define MODE_DEAD 2
+#define MODE_HIGHSCORE 3
+
 extern struct entity entities[NUM_ENTITIES];
 extern uint8_t wave;
 extern uint8_t wave_spawn_count;
 extern uint8_t lives;
 extern uint32_t score;
+extern uint8_t game_mode;
 
 extern void stepGame();
 

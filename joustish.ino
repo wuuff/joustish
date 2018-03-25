@@ -31,6 +31,7 @@ void setup() {
 
   lives = 5;
   score = 0;
+  game_mode = MODE_GAME;
   entities[0].type = TYPE_PLAYER;
   entities[0].x = 8*52;
   entities[0].y = 8*25;
