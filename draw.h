@@ -8,3 +8,5 @@ extern void drawGame();
 
 #define ANIM_FLIP 8
 #define ANIM_FRAME 16
+
+extern uint16_t title_animation;

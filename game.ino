@@ -535,6 +535,7 @@ void stepDead(){
         game_mode = MODE_HIGHSCORE;
       }else{
         game_mode = MODE_TITLE;
+        title_animation = 256; // Jump to highscores part of title
       }
     }
     a_held = 0;
@@ -561,6 +562,7 @@ void stepHighscoreEntry(){
         game_mode = MODE_TITLE;
         a_held = 0;
         button_held = 0;
+        title_animation = 256; // Jump to highscores part of title
         return;
       }
     }
