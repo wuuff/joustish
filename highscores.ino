@@ -2,12 +2,8 @@
 
 #define SAVE_BASE 709
 
-#define NUM_HIGHSCORES 5
-
-struct highscore_table{
-  char initials[NUM_HIGHSCORES][3];
-  uint32_t scores[NUM_HIGHSCORES];
-};
+char score_initials[3] = {'A','A','A'};
+uint8_t initials_cursor;
 
 struct highscore_table highscores;
 
@@ -17,7 +13,7 @@ void loadHighscores(){
   if( EEPROM.read(SAVE_BASE) == 'J' ){
     for( i = 0; i < NUM_HIGHSCORES; i++ ){
       for( j = 0; j < 3; j++ ){
-        highscores.initials[i][j] = EEPROM.read(SAVE_BASE + 3*i);
+        highscores.initials[i][j] = EEPROM.read(SAVE_BASE + 3*i + j);
       }
     }
     for( i = 0; i < NUM_HIGHSCORES; i++ ){
@@ -31,7 +27,7 @@ void saveHighscores(){
   EEPROM.update(SAVE_BASE, 'J');
   for( i = 0; i < NUM_HIGHSCORES; i++ ){
     for( j = 0; j < 3; j++ ){
-      EEPROM.update(SAVE_BASE + 3*i, highscores.initials[i][j]);
+      EEPROM.update(SAVE_BASE + 3*i + j, highscores.initials[i][j]);
     }
   }
   for( i = 0; i < NUM_HIGHSCORES; i++ ){
@@ -59,7 +55,7 @@ void addHighscore(uint32_t score, char inits[3]){
       }
       highscores.scores[i+1] = highscores.scores[i];
     }
-    if( (uint32_t)highscores.scores[i] < score ){
+    if( i == 0 || (uint32_t)highscores.scores[i-1] > score ){
       //Write our score here
       for( j = 0; j < 3; j++ ){
         highscores.initials[i][j] = inits[j];

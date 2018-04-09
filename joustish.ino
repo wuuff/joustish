@@ -15,6 +15,7 @@ version 2.1 of the License, or (at your option) any later version.
 
 #include "game.h"
 #include "draw.h"
+#include "highscores.h"
 
 // make an instance of arduboy used for many functions
 Arduboy2 arduboy;
@@ -28,6 +29,8 @@ void setup() {
   // here we set the framerate to 15, we do not need to run at
   // default 60 and it saves us battery life
   arduboy.setFrameRate(15);
+
+  loadHighscores();
 
   lives = 5;
   score = 0;

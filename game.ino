@@ -14,6 +14,9 @@ uint32_t score;
 
 uint8_t game_mode;
 
+uint8_t button_held;
+uint8_t a_held;
+
 /*
  * This contains the locations of the spawn locations in the map
  */
@@ -296,7 +299,7 @@ void stepEntity(uint8_t index){
         if( lives > 0 ){
           spawnBird(index); //Respawn player
         }else{
-          
+          game_mode = MODE_DEAD; //GAME OVER
         }
       }else{
         entities[index].type = TYPE_NULL;//Despawn
@@ -308,7 +311,11 @@ void stepEntity(uint8_t index){
   else if( entities[index].x+(8*4) < 0 ){
     if( entities[index].status == STATUS_DEAD ){
       if( entities[index].type == TYPE_PLAYER ){
-        spawnBird(index); //Respawn player TODO: only respawn if have lives
+        if( lives > 0 ){
+          spawnBird(index); //Respawn player
+        }else{
+          game_mode = MODE_DEAD; //GAME OVER
+        }
       }else{
         entities[index].type = TYPE_NULL;//Despawn
       }
@@ -515,11 +522,103 @@ void stepWave(uint8_t all_dead){
   }
 }
 
+void stepDead(){
+  uint8_t state = arduboy.buttonsState();
+  if( A_BUTTON & state ){
+    a_held = 1;
+  }else{
+    // Only register A button if it was previously held but is not held now
+    // If A was pressed, either enter highscore entry mode if player has a highscore,
+    // or go straight to title if not.
+    if( a_held ){
+      if( isHighscore(score) ){
+        game_mode = MODE_HIGHSCORE;
+      }else{
+        game_mode = MODE_TITLE;
+      }
+    }
+    a_held = 0;
+  }
+}
+
+void stepHighscoreEntry(){
+  uint8_t state = arduboy.buttonsState();
+
+  if( state ){
+    button_held++;
+  }
+  if( A_BUTTON & state ){
+    a_held = 1;
+  }else{
+    // Only register A button if it was previously held but is not held now
+    // Advance cursor, but if we are on the last initial, accept initials and return to title
+    if( a_held ){
+      initials_cursor++;
+      if( initials_cursor == 3 ){
+        initials_cursor = 0;
+        addHighscore( score, score_initials );
+        saveHighscores(); // Save to EEPROM
+        game_mode = MODE_TITLE;
+        a_held = 0;
+        button_held = 0;
+        return;
+      }
+    }
+    a_held = 0;
+  }
+  //Button must be held for at least two frames
+  if( button_held < 2 ){
+    return;
+  }
+  button_held = 0;
+
+  // Cycle through letters
+  if( UP_BUTTON & state ){
+    score_initials[initials_cursor]--;
+  }else if( DOWN_BUTTON & state ){
+    score_initials[initials_cursor]++;
+  }
+
+  // Cycle through initials position
+  if( LEFT_BUTTON & state ){
+    initials_cursor = initials_cursor > 0 ? initials_cursor - 1 : 2;
+  }else if( RIGHT_BUTTON & state ){
+    initials_cursor++;
+    initials_cursor %= 3;
+  }
+
+}
+
+void stepTitle(){
+  uint8_t i;
+  uint8_t state = arduboy.buttonsState();
+  if( A_BUTTON & state ){
+    // Reset lives and score
+    lives = 5;
+    score = 0;
+    // Reset player
+    entities[0].type = TYPE_PLAYER;
+    entities[0].status = STATUS_NORMAL;
+    entities[0].x = 8*52;
+    entities[0].y = 8*25;
+    entities[0].xvel = 0;
+    entities[0].yvel = 0;
+    // Reset waves
+    wave = 0;
+    wave_spawn_count = 0;
+    // Reset entities
+    for( i = 1; i < NUM_ENTITIES; i++ ){
+      entities[i].type = TYPE_NULL;
+    }
+    game_mode = MODE_GAME;
+  }
+}
+
 void stepGame(){
   uint8_t i,all_dead;
   switch( game_mode ){
     case MODE_TITLE:
-      //TODO
+      stepTitle();
       break;
     case MODE_GAME:
       all_dead = 1;
@@ -544,8 +643,10 @@ void stepGame(){
       stepWave(all_dead);
       break;
     case MODE_DEAD:
+      stepDead();
       break;
     case MODE_HIGHSCORE:
+      stepHighscoreEntry();
       break;
   }
 }

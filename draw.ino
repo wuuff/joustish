@@ -1,5 +1,6 @@
 #include "game.h"
 #include "draw.h"
+#include "highscores.h"
 #include <Tinyfont.h>
 
 const unsigned char background[] PROGMEM = {
@@ -157,24 +158,26 @@ uint8_t getSpriteOffset(uint8_t i){
 }
 
 void drawBackground(){
-  arduboy.drawBitmap(0, 0, background, 128, 64, WHITE);
-  /*
-   * There are several regions in the stage that we overwrite
-   * with black rectangles to erase them in later waves
-   */
-  if( wave >= 11 ){
-    //Fill top platform
-    arduboy.fillRect(0,10,15,5,BLACK);
-    arduboy.fillRect(107,10,21,5,BLACK);
-  }
-  if( wave >= 21 ){
-    //Fill middle platform
-    arduboy.fillRect(44,37,30,5,BLACK);
-  }
-  if( wave >= 31 ){
-    //Fill walkway over lava
-    arduboy.fillRect(0,56,25,3,BLACK);
-    arduboy.fillRect(102,56,26,3,BLACK);
+  if( game_mode == MODE_GAME ){
+    arduboy.drawBitmap(0, 0, background, 128, 64, WHITE);
+    /*
+     * There are several regions in the stage that we overwrite
+     * with black rectangles to erase them in later waves
+     */
+    if( wave >= 11 ){
+      //Fill top platform
+      arduboy.fillRect(0,10,15,5,BLACK);
+      arduboy.fillRect(107,10,21,5,BLACK);
+    }
+    if( wave >= 21 ){
+      //Fill middle platform
+      arduboy.fillRect(44,37,30,5,BLACK);
+    }
+    if( wave >= 31 ){
+      //Fill walkway over lava
+      arduboy.fillRect(0,56,25,3,BLACK);
+      arduboy.fillRect(102,56,26,3,BLACK);
+    }
   }
 }
 
@@ -209,12 +212,30 @@ void drawText(){
   tinyfont.print(score);
 }
 
+void drawHighscores(){
+  uint8_t i;
+  arduboy.setCursor(128/2-6*5,4);
+  arduboy.print(F("HIGHSCORES"));
+  for( i = 0; i < NUM_HIGHSCORES; i++ ){
+    arduboy.setCursor(128/2-6*5,16+i*8);
+    arduboy.print(highscores.initials[i][0]);
+    arduboy.print(highscores.initials[i][1]);
+    arduboy.print(highscores.initials[i][2]);
+    arduboy.print(F("  "));
+    if( highscores.scores[i] < 10000 ) arduboy.print(0);
+    if( highscores.scores[i] < 1000 ) arduboy.print(0);
+    if( highscores.scores[i] < 100 ) arduboy.print(0);
+    if( highscores.scores[i] < 10 ) arduboy.print(0);
+    arduboy.print(highscores.scores[i]);
+  }
+}
+
 void drawGame(){
   uint8_t i, sprOff;
   int16_t xdraw;
   switch( game_mode ){
     case MODE_TITLE:
-      //TODO
+      drawHighscores();
       break;
     case MODE_GAME:
       for( i = 0; i < NUM_ENTITIES; i++ ){
@@ -261,14 +282,45 @@ void drawGame(){
       drawText();
       break;
     case MODE_DEAD:
-      arduboy.setCursor(128/2-4*5,16);
+      arduboy.setCursor(128/2-6*4-3,16);
       arduboy.print(F("GAME OVER"));
+      arduboy.setCursor(128/2-6*3-3,32);
+      arduboy.print(F("PRESS A"));
       break;
     case MODE_HIGHSCORE:
-      arduboy.setCursor(128/2-4*5,16);
-      arduboy.print(F("GAME OVER"));
-      arduboy.setCursor(128/2-6*5,24);
+      arduboy.setCursor(128/2-6*6-3,16);
       arduboy.print(F("NEW HIGHSCORE"));
+      arduboy.setCursor(128/2-9,24);
+      for( i = 0; i < 3; i++ ){
+        //If this letter is selected, show arrows for it
+        if( i == initials_cursor ){
+          arduboy.print(F("\x1e"));
+        }else{
+          arduboy.print(F(" "));
+        }
+      }
+      arduboy.setCursor(128/2-9,32);
+      for( i = 0; i < 3; i++ ){
+        //Display value of letter
+        arduboy.print(score_initials[i]);
+      }
+      arduboy.setCursor(128/2-9,40);
+      for( i = 0; i < 3; i++ ){
+        //If this letter is selected, show arrows for it
+        if( i == initials_cursor ){
+          arduboy.print(F("\x1f"));
+        }else{
+          arduboy.print(F(" "));
+        }
+      }
+      // Print highscore
+      arduboy.setCursor(128/2-6*2-3,48);
+      if( score < 10000 ) arduboy.print(0);
+      if( score < 1000 ) arduboy.print(0);
+      if( score < 100 ) arduboy.print(0);
+      if( score < 10 ) arduboy.print(0);
+      arduboy.print(score);
+      
       break;
   }
 }
