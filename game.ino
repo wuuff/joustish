@@ -27,7 +27,7 @@ struct coord spawn_points[NUM_SPAWNS] = {
   {47,5},
   {6,23},
   {98,18},
-  {51,49},
+  {52,49},
 };
 
 /*
@@ -121,7 +121,6 @@ void testCollision(uint8_t index){
           if( (entities[index].type == TYPE_PLAYER && entities[i].type == TYPE_ENEMY) ){
             //If player is higher, enemy dies
             if( entities[index].y/8 < entities[i].y/8 ){
-              arduboy.print(F("ENEM"));
               entities[i].status = STATUS_DEAD;
               addScore(POINTS_BIRD);
               egg = -1;
@@ -140,7 +139,6 @@ void testCollision(uint8_t index){
               }
             }//If enemy is higher, player dies
             else if( entities[index].y/8 > entities[i].y/8 ){
-              arduboy.print(F("PLAY"));
               entities[index].status = STATUS_DEAD;
               lives--;
               survival_bonus = 0;
@@ -151,13 +149,11 @@ void testCollision(uint8_t index){
           else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_ENEMY) ){
             //If enemy is higher, player dies
             if( entities[index].y/8 < entities[i].y/8 ){
-              arduboy.print(F("PLAY"));
               entities[i].status = STATUS_DEAD;
               lives--;
               survival_bonus = 0;
             }//If player is higher, enemy dies
             else if( entities[index].y/8 > entities[i].y/8 ){
-              arduboy.print(F("ENEM"));
               entities[index].status = STATUS_DEAD;
               addScore(POINTS_BIRD);
               egg = -1;
@@ -182,7 +178,6 @@ void testCollision(uint8_t index){
             entities[i].type = TYPE_NULL;//Immediately despawn the egg
             addScore(POINTS_EGG);
           }
-          if(index == 0) arduboy.print(F("HIT"));
         }
       }
     }
@@ -586,8 +581,18 @@ void stepHighscoreEntry(){
   // Cycle through letters
   if( UP_BUTTON & state ){
     score_initials[initials_cursor]--;
+    // Skip over characters that mess up formatting
+    if( score_initials[initials_cursor] == '\x0d' || score_initials[initials_cursor] == '\n' )
+    {
+      score_initials[initials_cursor]--;
+    }
   }else if( DOWN_BUTTON & state ){
     score_initials[initials_cursor]++;
+    // Skip over characters that mess up formatting
+    if( score_initials[initials_cursor] == '\x0d' || score_initials[initials_cursor] == '\n' )
+    {
+      score_initials[initials_cursor]++;
+    }
   }
 
   // Cycle through initials position
