@@ -103,7 +103,11 @@ void tickAnim(uint8_t i){
     entities[i].anim += abs(entities[i].xvel)*4;
   }//If entity is spawning
   else if( entities[i].status == STATUS_UNDYING ){
-    entities[i].anim++;//Tick forward by only 1
+    if( entities[i].anim < 32 ){
+      entities[i].anim++;// Tick forward by only 1
+    }else{
+      entities[i].anim = entities[i].anim == 33 ? 32 : 33;// Alternate between 32 and 33
+    }
   }
 }
 
@@ -235,8 +239,8 @@ void drawGame(){
   switch( game_mode ){
     case MODE_TITLE:
       title_animation++;
-      title_animation %= 512;
-      if( title_animation < 256 ){
+      title_animation %= 256;
+      if( title_animation < 128 ){
         drawTitle();
       }else{
         drawHighscores();
@@ -257,9 +261,9 @@ void drawGame(){
         arduboy.drawBitmap(120 - ((int16_t)(title_animation+(8*i)) % 136 - 8), 56, stripesTop, 8, 8, WHITE);
       }
       // Slowly reveal stripes based on animation
-      if( title_animation < 128 ){
-        arduboy.fillRect(title_animation,0,128,8,BLACK);
-        arduboy.fillRect(0,56,128-title_animation,8,BLACK);
+      if( title_animation < 64 ){
+        arduboy.fillRect(title_animation*2,0,128,8,BLACK);
+        arduboy.fillRect(0,56,128-title_animation*2,8,BLACK);
       }
       break;
     case MODE_GAME:
@@ -269,7 +273,10 @@ void drawGame(){
             sprOff = getSpriteOffset(i);
             //If spawning, make it rise out of the spawn area
             if( entities[i].status == STATUS_UNDYING ){
-              arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
+              //Flash while invulnerable but ready to move
+              if( entities[i].anim != 33 ){
+                arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
+              }
             }else{
               //Enable drawing off the left side of the screen
               xdraw = ((uint16_t)entities[i].x)/8;

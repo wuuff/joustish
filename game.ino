@@ -221,10 +221,6 @@ uint8_t checkWorldY(uint8_t i){
 void stepEntity(uint8_t index){
   //Check if currently spawning.  If so, do not interact with other entities.
   if( entities[index].type != TYPE_EGG && entities[index].status == STATUS_UNDYING ){
-    //If spawn animation is done, remove invulnerability
-    if( entities[index].anim == 32 ){
-      entities[index].status = STATUS_NORMAL; //Finish spawning
-    }
     return;//No collision tests while spawning
   }
 
@@ -329,11 +325,21 @@ void stepPlayer(uint8_t index){
     survival_bonus = 0;
   }
   
-  if( entities[index].status == STATUS_UNDYING || entities[index].status == STATUS_DEAD ){
-    return;//No moving while spawning or dead
+  if( entities[index].status == STATUS_DEAD ){
+    return;//No moving while dead
   }
-  
+
   uint8_t state = arduboy.buttonsState();
+
+  if( entities[index].status == STATUS_UNDYING ){
+    // No moving while spawning until after the animation finishes.
+    // After that, stay invincible until the player presses any button
+    if( entities[index].anim >= 32 && state ){
+      entities[index].status = STATUS_NORMAL; //Finish spawning
+    }else{
+      return;
+    }
+  }
 
   //Apply left or right velocity
   if( LEFT_BUTTON & state ){
@@ -369,8 +375,18 @@ void stepPlayer(uint8_t index){
 void stepEnemy(uint8_t index){
   entities[index].skid = 0;//Assume not skidding
     
-  if( entities[index].status == STATUS_UNDYING || entities[index].status == STATUS_DEAD ){
-    return;//No moving while spawning or dead
+  if( entities[index].status == STATUS_DEAD ){
+    return;//No moving while dead
+  }
+
+  if( entities[index].status == STATUS_UNDYING ){
+    // No moving while spawning
+    // If spawn animation is done, remove invulnerability
+    if( entities[index].anim == 32 ){
+      entities[index].status = STATUS_NORMAL; // Finish spawning
+    }else{
+      return;
+    }
   }
   
   //Flap hard if close to lava
@@ -513,7 +529,7 @@ void stepDead(){
         game_mode = MODE_HIGHSCORE;
       }else{
         game_mode = MODE_TITLE;
-        title_animation = 256; // Jump to highscores part of title
+        title_animation = 128; // Jump to highscores part of title
       }
     }
     a_held = 0;
@@ -540,7 +556,7 @@ void stepHighscoreEntry(){
         game_mode = MODE_TITLE;
         a_held = 0;
         button_held = 0;
-        title_animation = 256; // Jump to highscores part of title
+        title_animation = 128; // Jump to highscores part of title
         return;
       }
     }
