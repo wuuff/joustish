@@ -173,10 +173,6 @@ void testCollision(uint8_t index){
             entities[i].type = TYPE_NULL;//Immediately despawn the egg
             addScore(POINTS_EGG);
           }
-          //If the colliding entities are an egg and the player
-          /*else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_EGG) ){
-            entities[index].type = TYPE_NULL;//Immediately despawn the egg
-          }*/
           if(index == 0) arduboy.print(F("HIT"));
         }
       }
@@ -259,7 +255,7 @@ void stepEntity(uint8_t index){
   while( entities[index].xvel != 0 && checkWorldX(index) ){
     entities[index].xvel /= -2;
   }
-  //arduboy.print( arduboy.getPixel((uint16_t)entities[index].x/8, (uint16_t)(entities[index].y + entities[index].yvel)/8) );
+  
   //Test world collision (y)
   while( entities[index].yvel != 0 && ( checkWorldY(index) ||
       (entities[index].y + entities[index].yvel)/8 > (SCREEN_HEIGHT-10) ||
@@ -277,15 +273,8 @@ void stepEntity(uint8_t index){
      entities[index].yvel -= 4;
    }
   
-  
   entities[index].x += (int16_t)entities[index].xvel;
   entities[index].y += (int16_t)entities[index].yvel;
-
-  //Stop from falling off bottom
-  /*if( entities[index].y > (SCREEN_HEIGHT-8)*8 ){
-    entities[index].y = (SCREEN_HEIGHT-8)*8-4;
-    entities[index].yvel = 0;
-  }*/
 
    //If get stuck above screen, force into screen
    if( (entities[index].y) < 0 ){
@@ -323,17 +312,6 @@ void stepEntity(uint8_t index){
       entities[index].x += (SCREEN_WIDTH)*8;
     }
   }
-
-  /*
-  arduboy.setCursor(4, 9);
-  arduboy.print((int16_t)entities[index].x);
-  arduboy.print(F(","));
-  arduboy.println((int16_t)entities[index].y);
-  
-  arduboy.print(entities[index].xvel);
-  arduboy.print(F(","));
-  arduboy.println(entities[index].yvel);
-  */
 }
 
 /*
