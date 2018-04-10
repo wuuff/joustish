@@ -10,6 +10,7 @@ uint8_t wave_spawn_count;
 uint8_t survival_bonus = 0;
 uint16_t egg_timer = 0;// Timer so that eggs stop spawning after a certain time
 #define EGG_LIMIT 900 // Egg spawn time limit (900 frames @ 15 fps = 60 seconds)
+uint8_t enemy_speed_bonus = 0;
 
 uint8_t lives;
 uint32_t score;
@@ -326,15 +327,15 @@ void stepEntity(uint8_t index){
 void stepPlayer(uint8_t index){
   entities[index].skid = 0;
 
+  if( entities[index].status == STATUS_DEAD ){
+    return;//No moving while dead
+  }
+
   //If player is touching the lava, they die
   if( entities[index].y >= (62-8)*8 ){
     entities[index].status = STATUS_DEAD;
     lives--;
     survival_bonus = 0;
-  }
-  
-  if( entities[index].status == STATUS_DEAD ){
-    return;//No moving while dead
   }
 
   uint8_t state = arduboy.buttonsState();
@@ -422,7 +423,7 @@ void stepEnemy(uint8_t index){
       entities[index].yvel -= 6;
     }
     //Run if not going too fast
-    if( entities[index].xvel > -ENEMY_VEL_MAX ){
+    if( entities[index].xvel > -ENEMY_VEL_MAX - enemy_speed_bonus ){
       entities[index].xvel -= 2;
     }
   }else if( entities[index].status == STATUS_RIGHT ){
@@ -433,7 +434,7 @@ void stepEnemy(uint8_t index){
       entities[index].yvel -= 6;
     }
     //Run if not going too fast
-    if( entities[index].xvel < ENEMY_VEL_MAX ){
+    if( entities[index].xvel < ENEMY_VEL_MAX + enemy_speed_bonus ){
       entities[index].xvel += 2;
     }
   }
@@ -488,6 +489,11 @@ void stepWave(uint8_t all_dead){
     wave_timer = 0;
     egg_timer = 0;
     w = wave % 10;
+    //If it's the first wave of a new set of waves,
+    //And if we are above wave 39 (displayed as wave 40)
+    if( wave >= 40 && w == 0 ){
+      enemy_speed_bonus += 2;// Give enemies speed boost
+    }
     switch( w ){
       case 5:
       case 7:
@@ -615,6 +621,9 @@ void stepTitle(){
     for( i = 1; i < NUM_ENTITIES; i++ ){
       entities[i].type = TYPE_NULL;
     }
+    //Reset enemy speed bonus
+    enemy_speed_bonus = 0;
+    
     game_mode = MODE_GAME;
   }
 }
