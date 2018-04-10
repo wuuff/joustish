@@ -8,6 +8,8 @@ uint8_t wave_timer;
 uint8_t wave_spawn_type;
 uint8_t wave_spawn_count;
 uint8_t survival_bonus = 0;
+uint16_t egg_timer = 0;// Timer so that eggs stop spawning after a certain time
+#define EGG_LIMIT 900 // Egg spawn time limit (900 frames @ 15 fps = 60 seconds)
 
 uint8_t lives;
 uint32_t score;
@@ -121,7 +123,10 @@ void testCollision(uint8_t index){
               arduboy.print(F("ENEM"));
               entities[i].status = STATUS_DEAD;
               addScore(POINTS_BIRD);
-              egg = trySpawn(TYPE_EGG);
+              egg = -1;
+              if( egg_timer < EGG_LIMIT ){
+                egg = trySpawn(TYPE_EGG);
+              }
               //If egg successfully spawned (if not, just silently fail to spawn egg)
               if( egg != -1 ){
                 //Give egg same position as parent bird, but double x velocity
@@ -154,7 +159,10 @@ void testCollision(uint8_t index){
               arduboy.print(F("ENEM"));
               entities[index].status = STATUS_DEAD;
               addScore(POINTS_BIRD);
-              egg = trySpawn(TYPE_EGG);
+              egg = -1;
+              if( egg_timer < EGG_LIMIT ){
+                egg = trySpawn(TYPE_EGG);
+              }
               //If egg successfully spawned (if not, just silently fail to spawn egg)
               if( egg != -1 ){
                 //Give egg same position as parent bird, but double x velocity
@@ -478,6 +486,7 @@ void stepWave(uint8_t all_dead){
       addScore(POINTS_SURVIVE);
     }
     wave_timer = 0;
+    egg_timer = 0;
     w = wave % 10;
     switch( w ){
       case 5:
@@ -618,6 +627,9 @@ void stepGame(){
       break;
     case MODE_GAME:
       all_dead = 1;
+      if( egg_timer < EGG_LIMIT ){
+        egg_timer++;
+      }
       for( i = 0; i < NUM_ENTITIES; i++ ){
         switch( entities[i].type ){
           case TYPE_PLAYER:
