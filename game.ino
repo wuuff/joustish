@@ -358,12 +358,12 @@ void stepPlayer(uint8_t index){
   }
 
   //Flap if button is pressed (but not held) or apply gravity
-  if( (A_BUTTON & state) && entities[index].status == STATUS_NORMAL ){
+  if( ((A_BUTTON & state) || (B_BUTTON & state)) && entities[index].status == STATUS_NORMAL ){
     entities[index].status = STATUS_FLAP;
     entities[index].yvel -= 16;
   }else{
     //If player was flapping (and button is no longer pressed), set back to not flapping
-    if( !(A_BUTTON & state) && entities[index].status == STATUS_FLAP ){
+    if( !(A_BUTTON & state || (B_BUTTON & state)) && entities[index].status == STATUS_FLAP ){
       entities[index].status = STATUS_NORMAL;
     }
     entities[index].yvel += GRAVITY;

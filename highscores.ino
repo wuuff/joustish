@@ -13,11 +13,11 @@ void loadHighscores(){
   if( EEPROM.read(SAVE_BASE) == 'J' ){
     for( i = 0; i < NUM_HIGHSCORES; i++ ){
       for( j = 0; j < 3; j++ ){
-        highscores.initials[i][j] = EEPROM.read(SAVE_BASE + 3*i + j);
+        highscores.initials[i][j] = EEPROM.read(SAVE_BASE + 1 + 3*i + j);
       }
     }
     for( i = 0; i < NUM_HIGHSCORES; i++ ){
-      EEPROM.get(SAVE_BASE + (3*NUM_HIGHSCORES) + 4*i, highscores.scores[i]); 
+      EEPROM.get(SAVE_BASE + 1 + (3*NUM_HIGHSCORES) + 4*i, highscores.scores[i]); 
     }
   }
 }
@@ -27,11 +27,11 @@ void saveHighscores(){
   EEPROM.update(SAVE_BASE, 'J');
   for( i = 0; i < NUM_HIGHSCORES; i++ ){
     for( j = 0; j < 3; j++ ){
-      EEPROM.update(SAVE_BASE + 3*i + j, highscores.initials[i][j]);
+      EEPROM.update(SAVE_BASE + 1 + 3*i + j, highscores.initials[i][j]);
     }
   }
   for( i = 0; i < NUM_HIGHSCORES; i++ ){
-    EEPROM.put(SAVE_BASE + (3*NUM_HIGHSCORES) + 4*i, highscores.scores[i]); 
+    EEPROM.put(SAVE_BASE + 1 + (3*NUM_HIGHSCORES) + 4*i, highscores.scores[i]); 
   }
 }
 
