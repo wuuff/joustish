@@ -78,8 +78,8 @@ int8_t trySpawn(uint8_t type){
  */
 void spawnBird(uint8_t index){
   uint8_t loc = rand()%NUM_SPAWNS;// Choose spawn location randomly
-  entities[index].x = spawn_points[loc].x*8;
-  entities[index].y = spawn_points[loc].y*8;
+  entities[index].x = spawn_points[loc].x*32;
+  entities[index].y = spawn_points[loc].y*32;
   entities[index].xvel = 0;
   entities[index].yvel = 0;
   entities[index].status = STATUS_UNDYING;// Invulnerable when it first spawns
@@ -91,8 +91,8 @@ void spawnBird(uint8_t index){
  */
 void spawnEgg(uint8_t index){
   uint8_t loc = rand()%NUM_EGG_SPAWNS;// Choose spawn location randomly
-  entities[index].x = egg_spawn_points[loc].x*8;
-  entities[index].y = egg_spawn_points[loc].y*8;
+  entities[index].x = egg_spawn_points[loc].x*32;
+  entities[index].y = egg_spawn_points[loc].y*32;
   entities[index].xvel = 0;
   entities[index].yvel = 0;
   entities[index].status = STATUS_UNDYING;// Unvulnerable when it first spawns
@@ -109,9 +109,9 @@ void testCollision(uint8_t index){
     //Do not check for collision with self or null entities
     if( i != index && entities[i].type != TYPE_NULL && entities[i].status != STATUS_DEAD && entities[i].status != STATUS_UNDYING){
       //If they are colliding on the x axis (bounding box of 6, not 8) NOW 8
-      if( entities[i].x-5*8 < entities[index].x && entities[i].x+5*8 > entities[index].x ){
+      if( entities[i].x-5*32 < entities[index].x && entities[i].x+5*32 > entities[index].x ){
         //If they are colliding on the y axis (bounding box of 7, not 8) NOW 8
-        if( entities[i].y-5*8 < entities[index].y && entities[i].y+5*8 > entities[index].y ){
+        if( entities[i].y-5*32 < entities[index].y && entities[i].y+5*32 > entities[index].y ){
           //If travelling towards other entity (if travelling away, do nothing)
           if( (entities[index].xvel > 0 && entities[i].x > entities[index].x) ||
               (entities[index].xvel < 0 && entities[i].x < entities[index].x) ){
@@ -120,7 +120,7 @@ void testCollision(uint8_t index){
           //If the colliding entities are the player and an enemy
           if( (entities[index].type == TYPE_PLAYER && entities[i].type == TYPE_ENEMY) ){
             //If player is higher, enemy dies
-            if( entities[index].y/8 < entities[i].y/8 ){
+            if( entities[index].y/32 < entities[i].y/32 ){
               entities[i].status = STATUS_DEAD;
               addScore(POINTS_BIRD);
               egg = -1;
@@ -138,7 +138,7 @@ void testCollision(uint8_t index){
                 entities[egg].anim = 0;// Reset animation, as we use this to animate the spawning
               }
             }//If enemy is higher, player dies
-            else if( entities[index].y/8 > entities[i].y/8 ){
+            else if( entities[index].y/32 > entities[i].y/32 ){
               entities[index].status = STATUS_DEAD;
               lives--;
               survival_bonus = 0;
@@ -148,12 +148,12 @@ void testCollision(uint8_t index){
           //If the colliding entities are the enemy and the player
           else if( (entities[i].type == TYPE_PLAYER && entities[index].type == TYPE_ENEMY) ){
             //If enemy is higher, player dies
-            if( entities[index].y/8 < entities[i].y/8 ){
+            if( entities[index].y/32 < entities[i].y/32 ){
               entities[i].status = STATUS_DEAD;
               lives--;
               survival_bonus = 0;
             }//If player is higher, enemy dies
-            else if( entities[index].y/8 > entities[i].y/8 ){
+            else if( entities[index].y/32 > entities[i].y/32 ){
               entities[index].status = STATUS_DEAD;
               addScore(POINTS_BIRD);
               egg = -1;
@@ -193,9 +193,9 @@ uint8_t checkWorldX(uint8_t i){
   //Check y coordinates 1 pixel in from top and bottom
   for( y = 1; y <= 7; y++ ){
     //Check collision 2 pixels in from each side (but don't check collision if it's offscreen)
-    x = (uint16_t)(entities[i].x + entities[i].xvel)/8;
-    if( x+8 < 128 && x-8 < 256 && ( arduboy.getPixel(x+2, (uint16_t)entities[i].y/8+y) == WHITE ||
-        arduboy.getPixel(x+6, (uint16_t)entities[i].y/8+y) == WHITE ) ){
+    x = (uint16_t)(entities[i].x + entities[i].xvel)/32;
+    if( x+8 < 128 && x-8 < 256 && ( arduboy.getPixel(x+2, (uint16_t)entities[i].y/32+y) == WHITE ||
+        arduboy.getPixel(x+6, (uint16_t)entities[i].y/32+y) == WHITE ) ){
           return 1;
     }
   }
@@ -210,8 +210,8 @@ uint8_t checkWorldY(uint8_t i){
   //Check y coordinates 1 pixel in from top and bottom
   for( y = 1; y <= 7; y++ ){
     //Check collision 2 pixels in from each side
-    if( arduboy.getPixel((uint16_t)entities[i].x/8+2, (uint16_t)(entities[i].y + entities[i].yvel)/8+y) == WHITE ||
-        arduboy.getPixel((uint16_t)entities[i].x/8+6, (uint16_t)(entities[i].y + entities[i].yvel)/8+y) == WHITE ){
+    if( arduboy.getPixel((uint16_t)entities[i].x/32+2, (uint16_t)(entities[i].y + entities[i].yvel)/32+y) == WHITE ||
+        arduboy.getPixel((uint16_t)entities[i].x/32+6, (uint16_t)(entities[i].y + entities[i].yvel)/32+y) == WHITE ){
           return 1;
     }
   }
@@ -233,12 +233,12 @@ void stepEntity(uint8_t index){
     //If dead, attempt to run to the edge of the screen
     //Random flaps
     if( rand()%6 == 0 ){
-      entities[index].yvel -= 16;
+      entities[index].yvel -= 16*4;
     }
-    if( entities[index].x < (SCREEN_WIDTH*8)/2 ){
-      entities[index].xvel -= 2;
+    if( entities[index].x < (SCREEN_WIDTH*32)/2 ){
+      entities[index].xvel -= 2*4;
     }else{
-      entities[index].xvel += 2;
+      entities[index].xvel += 2*4;
     }
   }else{
     //Test for collision with other entities
@@ -258,7 +258,7 @@ void stepEntity(uint8_t index){
   
   //Test world collision (y)
   while( entities[index].yvel != 0 && ( checkWorldY(index) ||
-      (entities[index].y + entities[index].yvel)/8 > (SCREEN_HEIGHT-10) ||
+      (entities[index].y + entities[index].yvel)/32 > (SCREEN_HEIGHT-10) ||
       (entities[index].y + entities[index].yvel) < 0 ) ){
     //Bounce if travelling upwards, but just stop if going down (so you don't bounce on landing)
     if( entities[index].yvel < 0 ){
@@ -269,8 +269,8 @@ void stepEntity(uint8_t index){
   }
 
   //Free if get stuck (but only if not offscreen, because offscreen we can't reliably check collision)
-  if( entities[index].x > 0 && entities[index].x < (128-8)*8 && checkWorldY(index) ){
-     entities[index].yvel -= 4;
+  if( entities[index].x > 0 && entities[index].x < (128-8)*32 && checkWorldY(index) ){
+     entities[index].yvel -= 4*4;
    }
   
   entities[index].x += (int16_t)entities[index].xvel;
@@ -282,7 +282,7 @@ void stepEntity(uint8_t index){
    }
 
   //Wrap left and right
-  if( entities[index].x > (SCREEN_WIDTH-4)*8 ){
+  if( entities[index].x > (SCREEN_WIDTH-4)*32 ){
     if( entities[index].status == STATUS_DEAD ){
       if( entities[index].type == TYPE_PLAYER ){
         if( lives > 0 ){
@@ -294,10 +294,10 @@ void stepEntity(uint8_t index){
         entities[index].type = TYPE_NULL;//Despawn
       }
     }else{
-      entities[index].x -= (SCREEN_WIDTH)*8;
+      entities[index].x -= (SCREEN_WIDTH)*32;
     }
   }
-  else if( entities[index].x+(8*4) < 0 ){
+  else if( entities[index].x+(32*4) < 0 ){
     if( entities[index].status == STATUS_DEAD ){
       if( entities[index].type == TYPE_PLAYER ){
         if( lives > 0 ){
@@ -309,7 +309,7 @@ void stepEntity(uint8_t index){
         entities[index].type = TYPE_NULL;//Despawn
       }
     }else{
-      entities[index].x += (SCREEN_WIDTH)*8;
+      entities[index].x += (SCREEN_WIDTH)*32;
     }
   }
 }
@@ -327,7 +327,7 @@ void stepPlayer(uint8_t index){
   }
 
   //If player is touching the lava, they die
-  if( entities[index].y >= (62-8)*8 ){
+  if( entities[index].y >= (62-8)*32 ){
     entities[index].status = STATUS_DEAD;
     lives--;
     survival_bonus = 0;
@@ -349,18 +349,18 @@ void stepPlayer(uint8_t index){
   if( LEFT_BUTTON & state ){
     //If direction differs, then we are skidding
     if( entities[index].xvel > 0 ) entities[index].skid = 1;
-    entities[index].xvel -= 2;
+    entities[index].xvel -= 2*4;
   }
   else if( RIGHT_BUTTON & state ){
     //If direction differs, then we are skidding
     if( entities[index].xvel < 0 ) entities[index].skid = 1;
-    entities[index].xvel += 2;
+    entities[index].xvel += 2*4;
   }
 
   //Flap if button is pressed (but not held) or apply gravity
   if( ((A_BUTTON & state) || (B_BUTTON & state)) && entities[index].status == STATUS_NORMAL ){
     entities[index].status = STATUS_FLAP;
-    entities[index].yvel -= 16;
+    entities[index].yvel -= 16*4;
   }else{
     //If player was flapping (and button is no longer pressed), set back to not flapping
     if( !(A_BUTTON & state || (B_BUTTON & state)) && entities[index].status == STATUS_FLAP ){
@@ -394,12 +394,12 @@ void stepEnemy(uint8_t index){
   }
   
   //Flap hard if close to lava
-  if( entities[index].y > (58-8)*8 ){
-    entities[index].yvel -= 32;
+  if( entities[index].y > (58-8)*32 ){
+    entities[index].yvel -= 32*4;
   }
   //Random flaps
   if( rand()%6 == 0 ){
-    entities[index].yvel -= 16;
+    entities[index].yvel -= 16*4;
   }
   //Switch direction chance
   if( rand()%64 == 0 ){
@@ -414,23 +414,23 @@ void stepEnemy(uint8_t index){
     //If direction differs, then we are skidding
     if( entities[index].xvel > 0 ) entities[index].skid = 1;
     //Flap if stuck
-    if( entities[index].xvel > -2 ){
-      entities[index].yvel -= 6;
+    if( entities[index].xvel > -2*4 ){
+      entities[index].yvel -= 6*4;
     }
     //Run if not going too fast
     if( entities[index].xvel > -ENEMY_VEL_MAX - enemy_speed_bonus ){
-      entities[index].xvel -= 2;
+      entities[index].xvel -= 2*4;
     }
   }else if( entities[index].status == STATUS_RIGHT ){
     //If direction differs, then we are skidding
     if( entities[index].xvel < 0 ) entities[index].skid = 1;
     //Flap if stuck
-    if( entities[index].xvel < 2 ){
-      entities[index].yvel -= 6;
+    if( entities[index].xvel < 2*4 ){
+      entities[index].yvel -= 6*4;
     }
     //Run if not going too fast
     if( entities[index].xvel < ENEMY_VEL_MAX + enemy_speed_bonus ){
-      entities[index].xvel += 2;
+      entities[index].xvel += 2*4;
     }
   }
   entities[index].yvel += GRAVITY;
@@ -440,9 +440,9 @@ void stepEgg(uint8_t index){
   entities[index].yvel += GRAVITY;
   //Apply friction to egg
   if( entities[index].xvel > 0 ){
-    entities[index].xvel--;
+    entities[index].xvel -= 1*4;
   }else if( entities[index].xvel < 0 ){
-    entities[index].xvel++;
+    entities[index].xvel += 1*4;
   }
   //If the animation indicates that egg invulnerability should have worn off
   if( entities[index].anim >= 16 ){

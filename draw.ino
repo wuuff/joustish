@@ -100,7 +100,7 @@ void tickAnim(uint8_t i){
   //Normal statuses (TODO: perhaps organize normal statuses better)
   if( entities[i].status == STATUS_NORMAL || entities[i].status == STATUS_FLAP || entities[i].status == STATUS_RIGHT || entities[i].status == STATUS_DEAD ){
     //Run animation is timed with walking speed
-    entities[i].anim += abs(entities[i].xvel)*4;
+    entities[i].anim += abs(entities[i].xvel)*4/4;
   }//If entity is spawning
   else if( entities[i].status == STATUS_UNDYING ){
     if( entities[i].anim < 32 ){
@@ -135,7 +135,7 @@ uint8_t getSpriteOffset(uint8_t i){
   //Otherwise run with frame 1 or 2 depending on animation
   else{
     //If on ground, walk.  If in air, fly.
-    if( arduboy.getPixel((uint16_t)entities[i].x/8+4, (uint16_t)entities[i].y/8+8) == WHITE ){
+    if( arduboy.getPixel((uint16_t)entities[i].x/32+4, (uint16_t)entities[i].y/32+8) == WHITE ){
       sprOff += ANIM_WALK;
     }else{
       sprOff += ANIM_FLY;
@@ -275,38 +275,38 @@ void drawGame(){
             if( entities[i].status == STATUS_UNDYING ){
               //Flash while invulnerable but ready to move
               if( entities[i].anim != 33 ){
-                arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
+                arduboy.drawBitmap(((uint16_t)entities[i].x)/32, ((uint16_t)entities[i].y)/32 + (8-entities[i].anim/4), playerSprites+sprOff, 8, entities[i].anim/4, WHITE);
               }
             }else{
               //Enable drawing off the left side of the screen
-              xdraw = ((uint16_t)entities[i].x)/8;
-              if( xdraw > 256 ) xdraw -= 8192;// 65536/8
-              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, playerSprites+sprOff, 8, 8, WHITE);
+              xdraw = ((uint16_t)entities[i].x)/32;
+              if( xdraw > 256 ) xdraw -= 2048;// 65536/32
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/32, playerSprites+sprOff, 8, 8, WHITE);
             }
             break;
           case TYPE_ENEMY:
             sprOff = getSpriteOffset(i);
             //If spawning, make it rise out of the spawn area
             if( entities[i].status == STATUS_UNDYING ){
-              arduboy.drawBitmap(((uint16_t)entities[i].x)/8, ((uint16_t)entities[i].y)/8 + (8-entities[i].anim/4), enemySprites+sprOff, 8, entities[i].anim/4, WHITE);
+              arduboy.drawBitmap(((uint16_t)entities[i].x)/32, ((uint16_t)entities[i].y)/32 + (8-entities[i].anim/4), enemySprites+sprOff, 8, entities[i].anim/4, WHITE);
             }else{
               //Enable drawing off the left side of the screen
-              xdraw = ((uint16_t)entities[i].x)/8;
-              if( xdraw > 256 ) xdraw -= 8192;// 65536/8
-              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, enemySprites+sprOff, 8, 8, WHITE);
+              xdraw = ((uint16_t)entities[i].x)/32;
+              if( xdraw > 256 ) xdraw -= 2048;// 65536/32
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/32, enemySprites+sprOff, 8, 8, WHITE);
             }
             break;
           case TYPE_EGG:
             entities[i].anim++;
             //Enable drawing off the left side of the screen
-            xdraw = ((uint16_t)entities[i].x)/8;
-            if( xdraw > 256 ) xdraw -= 8192;// 65536/8
+            xdraw = ((uint16_t)entities[i].x)/32;
+            if( xdraw > 256 ) xdraw -= 2048;// 65536/32
             //If animation is less than 3/4 completed, don't show it starting to hatch
             if( entities[i].anim < 192 ){
-              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites, 8, 8, WHITE);
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/32, eggSprites, 8, 8, WHITE);
             }else{
               //Show egg starting to hatch
-              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/8, eggSprites+8, 8, 8, WHITE);
+              arduboy.drawBitmap( xdraw, ((uint16_t)entities[i].y)/32, eggSprites+8, 8, 8, WHITE);
             }
             break;
         }
