@@ -17,7 +17,8 @@ uint32_t score;
 
 uint8_t game_mode;
 
-uint8_t button_held;
+uint8_t up_held;
+uint8_t down_held;
 uint8_t a_held;
 
 /*
@@ -233,12 +234,12 @@ void stepEntity(uint8_t index){
     //If dead, attempt to run to the edge of the screen
     //Random flaps
     if( rand()%6 == 0 ){
-      entities[index].yvel -= 16*4;
+      entities[index].yvel -= 16;
     }
     if( entities[index].x < (SCREEN_WIDTH*32)/2 ){
-      entities[index].xvel -= 2*4;
+      entities[index].xvel -= 2;
     }else{
-      entities[index].xvel += 2*4;
+      entities[index].xvel += 2;
     }
   }else{
     //Test for collision with other entities
@@ -270,7 +271,7 @@ void stepEntity(uint8_t index){
 
   //Free if get stuck (but only if not offscreen, because offscreen we can't reliably check collision)
   if( entities[index].x > 0 && entities[index].x < (128-8)*32 && checkWorldY(index) ){
-     entities[index].yvel -= 4*4;
+     entities[index].yvel -= 4;
    }
   
   entities[index].x += (int16_t)entities[index].xvel;
@@ -349,12 +350,12 @@ void stepPlayer(uint8_t index){
   if( LEFT_BUTTON & state ){
     //If direction differs, then we are skidding
     if( entities[index].xvel > 0 ) entities[index].skid = 1;
-    entities[index].xvel -= 2*4;
+    entities[index].xvel -= 1;
   }
   else if( RIGHT_BUTTON & state ){
     //If direction differs, then we are skidding
     if( entities[index].xvel < 0 ) entities[index].skid = 1;
-    entities[index].xvel += 2*4;
+    entities[index].xvel += 1;
   }
 
   //Flap if button is pressed (but not held) or apply gravity
@@ -366,7 +367,7 @@ void stepPlayer(uint8_t index){
     if( !(A_BUTTON & state || (B_BUTTON & state)) && entities[index].status == STATUS_FLAP ){
       entities[index].status = STATUS_NORMAL;
     }
-    entities[index].yvel += GRAVITY;
+    entities[index].yvel += GRAVITY*3/4;
   }
 
 }
@@ -395,11 +396,11 @@ void stepEnemy(uint8_t index){
   
   //Flap hard if close to lava
   if( entities[index].y > (58-8)*32 ){
-    entities[index].yvel -= 32*4;
+    entities[index].yvel -= 32;
   }
   //Random flaps
   if( rand()%6 == 0 ){
-    entities[index].yvel -= 16*4;
+    entities[index].yvel -= 16;
   }
   //Switch direction chance
   if( rand()%64 == 0 ){
@@ -415,7 +416,7 @@ void stepEnemy(uint8_t index){
     if( entities[index].xvel > 0 ) entities[index].skid = 1;
     //Flap if stuck
     if( entities[index].xvel > -2*4 ){
-      entities[index].yvel -= 6*4;
+      entities[index].yvel -= 6;
     }
     //Run if not going too fast
     if( entities[index].xvel > -ENEMY_VEL_MAX - enemy_speed_bonus ){
@@ -426,11 +427,11 @@ void stepEnemy(uint8_t index){
     if( entities[index].xvel < 0 ) entities[index].skid = 1;
     //Flap if stuck
     if( entities[index].xvel < 2*4 ){
-      entities[index].yvel -= 6*4;
+      entities[index].yvel -= 6;
     }
     //Run if not going too fast
     if( entities[index].xvel < ENEMY_VEL_MAX + enemy_speed_bonus ){
-      entities[index].xvel += 2*4;
+      entities[index].xvel += 2;
     }
   }
   entities[index].yvel += GRAVITY;
@@ -440,9 +441,9 @@ void stepEgg(uint8_t index){
   entities[index].yvel += GRAVITY;
   //Apply friction to egg
   if( entities[index].xvel > 0 ){
-    entities[index].xvel -= 1*4;
+    entities[index].xvel -= 1;
   }else if( entities[index].xvel < 0 ){
-    entities[index].xvel += 1*4;
+    entities[index].xvel += 1;
   }
   //If the animation indicates that egg invulnerability should have worn off
   if( entities[index].anim >= 16 ){
@@ -457,6 +458,7 @@ void stepEgg(uint8_t index){
 
 void stepWave(uint8_t all_dead){
   int8_t spawned, w;
+  if( !arduboy.everyXFrames(4) ) return;
   wave_timer++;
   if( wave_spawn_count > 0 ){
     if( wave_timer%10 == 0 ){
@@ -549,44 +551,39 @@ void stepDead(){
 void stepHighscoreEntry(){
   uint8_t state = arduboy.buttonsState();
 
-  if( state ){
-    button_held++;
+  if( UP_BUTTON & state ){
+    up_held++;
   }
-  if( A_BUTTON & state ){
-    a_held = 1;
-  }else{
-    // Only register A button if it was previously held but is not held now
+  if( DOWN_BUTTON & state ){
+    down_held++;
+  }
+  if( arduboy.justPressed( A_BUTTON ) ){
     // Advance cursor, but if we are on the last initial, accept initials and return to title
-    if( a_held ){
-      initials_cursor++;
-      if( initials_cursor == 3 ){
-        initials_cursor = 0;
-        addHighscore( score, score_initials );
-        saveHighscores(); // Save to EEPROM
-        game_mode = MODE_TITLE;
-        a_held = 0;
-        button_held = 0;
-        title_animation = 128; // Jump to highscores part of title
-        return;
-      }
+    initials_cursor++;
+    if( initials_cursor == 3 ){
+      initials_cursor = 0;
+      addHighscore( score, score_initials );
+      saveHighscores(); // Save to EEPROM
+      game_mode = MODE_TITLE;
+      a_held = 0;
+      up_held = 0;
+      down_held = 0;
+      title_animation = 128; // Jump to highscores part of title
+      return;
     }
-    a_held = 0;
   }
-  //Button must be held for at least two frames
-  if( button_held < 2 ){
-    return;
-  }
-  button_held = 0;
 
   // Cycle through letters
-  if( UP_BUTTON & state ){
+  if( arduboy.justPressed( UP_BUTTON ) || up_held > 2*4 ){
+    up_held = 0;
     score_initials[initials_cursor]--;
     // Skip over characters that mess up formatting
     if( score_initials[initials_cursor] == '\x0d' || score_initials[initials_cursor] == '\n' )
     {
       score_initials[initials_cursor]--;
     }
-  }else if( DOWN_BUTTON & state ){
+  }else if( arduboy.justPressed( DOWN_BUTTON ) || down_held > 2*4 ){
+    down_held = 0;
     score_initials[initials_cursor]++;
     // Skip over characters that mess up formatting
     if( score_initials[initials_cursor] == '\x0d' || score_initials[initials_cursor] == '\n' )
@@ -596,9 +593,9 @@ void stepHighscoreEntry(){
   }
 
   // Cycle through initials position
-  if( LEFT_BUTTON & state ){
+  if( arduboy.justPressed( LEFT_BUTTON ) ){
     initials_cursor = initials_cursor > 0 ? initials_cursor - 1 : 2;
-  }else if( RIGHT_BUTTON & state ){
+  }else if( arduboy.justPressed( RIGHT_BUTTON ) ){
     initials_cursor++;
     initials_cursor %= 3;
   }
@@ -607,8 +604,7 @@ void stepHighscoreEntry(){
 
 void stepTitle(){
   uint8_t i;
-  uint8_t state = arduboy.buttonsState();
-  if( A_BUTTON & state ){
+  if( arduboy.justPressed( A_BUTTON ) ){
     // Reset lives and score
     lives = 5;
     score = 0;
@@ -641,7 +637,7 @@ void stepGame(){
       break;
     case MODE_GAME:
       all_dead = 1;
-      if( egg_timer < EGG_LIMIT ){
+      if( arduboy.everyXFrames(4) && egg_timer < EGG_LIMIT ){
         egg_timer++;
       }
       for( i = 0; i < NUM_ENTITIES; i++ ){

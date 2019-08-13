@@ -12,7 +12,7 @@ void setup() {
   // Framerate at 15 fps, which hopefully is smooth enough, because
   // the game speed is tied to framerate, so changing it would alter
   // the gameplay significantly
-  arduboy.setFrameRate(15);
+  arduboy.setFrameRate(60);
 
   loadHighscores();
   
@@ -24,6 +24,7 @@ void loop() {
     return;
 
   arduboy.clear();
+  arduboy.pollButtons();
   
   //Render background first so we can use it for collision
   drawBackground();

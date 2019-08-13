@@ -102,7 +102,7 @@ void tickAnim(uint8_t i){
     //Run animation is timed with walking speed
     entities[i].anim += abs(entities[i].xvel)*4/4;
   }//If entity is spawning
-  else if( entities[i].status == STATUS_UNDYING ){
+  else if( arduboy.everyXFrames(4) && entities[i].status == STATUS_UNDYING ){
     if( entities[i].anim < 32 ){
       entities[i].anim++;// Tick forward by only 1
     }else{
@@ -238,8 +238,11 @@ void drawGame(){
   int16_t xdraw;
   switch( game_mode ){
     case MODE_TITLE:
-      title_animation++;
-      title_animation %= 256;
+      /* Convoluted way to get around slowdown when drawing title animation */
+      if( (title_animation >= 128 && arduboy.everyXFrames(2)) || arduboy.everyXFrames(4) ){
+        title_animation++;
+        title_animation %= 256;
+      }
       if( title_animation < 128 ){
         drawTitle();
       }else{
@@ -297,7 +300,9 @@ void drawGame(){
             }
             break;
           case TYPE_EGG:
-            entities[i].anim++;
+            if( arduboy.everyXFrames(4) ){
+              entities[i].anim++;
+            }
             //Enable drawing off the left side of the screen
             xdraw = ((uint16_t)entities[i].x)/32;
             if( xdraw > 256 ) xdraw -= 2048;// 65536/32

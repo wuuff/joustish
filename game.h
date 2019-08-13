@@ -17,9 +17,9 @@ struct coord{
   uint16_t y;
 };
 
-#define GRAVITY 4*4
-#define VEL_MAX 31*4
-#define ENEMY_VEL_MAX 8*4//#define ENEMY_VEL_MAX 16
+#define GRAVITY 4
+#define VEL_MAX 31
+#define ENEMY_VEL_MAX 8//#define ENEMY_VEL_MAX 16
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
